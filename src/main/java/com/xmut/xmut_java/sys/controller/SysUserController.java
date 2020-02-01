@@ -13,8 +13,8 @@ import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 
 @RestController
-@RequestMapping("/sysStudent")
-public class SysStudentController extends BaseController{
+@RequestMapping("/sysUser")
+public class SysUserController extends BaseController{
 	@Autowired
 	private SysUserMapper sysUserMapper;
 	
@@ -32,6 +32,9 @@ public class SysStudentController extends BaseController{
 			params.setPassword(password);
 			params.setFlag(flag);
 			params.setScore((long)0);
+			params.setIsSign((long)0);
+			params.setSignDay((long) 0);
+			
 			sysUserMapper.insert(params);
 			result.success("注册成功,请前往登录");
 		}
@@ -53,7 +56,18 @@ public class SysStudentController extends BaseController{
 		}else {
 			result.success("登录成功");
 			result.setData(user);
-			request.setAttribute("user", user);
+			request.getSession().setAttribute("user", user);
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/logout")
+	public Result logout(HttpServletRequest request) {
+		Result result = new Result();
+
+		if (request.getSession().getAttribute("user") != null) {
+			request.getSession().removeAttribute("user");
 		}
 		
 		return result;
