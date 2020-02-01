@@ -61,7 +61,7 @@ public class Result<T> implements Serializable {
 	}
 	
 	public void success(String message) {
-		this.success = false;
+		this.success = true;
 		this.message = message;
 		this.statusCode = ResultType.SUCCESS.getCode();
 		if (this.message == null || "".equals(this.message)) {
