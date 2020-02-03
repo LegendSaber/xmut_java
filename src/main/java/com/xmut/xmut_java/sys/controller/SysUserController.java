@@ -69,6 +69,7 @@ public class SysUserController extends BaseController{
 		if (request.getSession().getAttribute("user") != null) {
 			request.getSession().removeAttribute("user");
 		}
+		result.success("退出登录成功");
 		
 		return result;
 	}
