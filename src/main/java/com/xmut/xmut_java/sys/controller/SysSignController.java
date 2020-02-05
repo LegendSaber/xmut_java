@@ -14,7 +14,7 @@ import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 
 @RestController
 @RequestMapping("/sysSign")
-public class SysSign extends BaseController{
+public class SysSignController extends BaseController{
 	@Autowired
 	private SysUserMapper sysUserMapper;
 	

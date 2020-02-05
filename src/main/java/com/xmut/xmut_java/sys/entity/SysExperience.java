@@ -10,6 +10,7 @@ public class SysExperience extends BaseEntity{
 	private String author;
 	private String title;
 	private String content;
+	private Long clickNum;
 	
 	
 	public Long getId() {
@@ -35,5 +36,11 @@ public class SysExperience extends BaseEntity{
 	}
 	public void setContent(String content) {
 		this.content = content;
+	}
+	public Long getClickNum() {
+		return clickNum;
+	}
+	public void setClickNum(Long clickNum) {
+		this.clickNum = clickNum;
 	}
 }
