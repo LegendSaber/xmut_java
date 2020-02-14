@@ -37,8 +37,8 @@ public class SysExperienceComtroller extends BaseController{
 			SysExperience parms = new SysExperience();
 			QueryWrapper<SysExperience> warpper = new QueryWrapper<SysExperience>(parms);
 			
-			warpper.orderByDesc("click_num");
-			
+			warpper.orderByDesc("modify_time");
+
 			result.setData(sysExperienceMapper.selectPage(page, warpper));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -67,7 +67,7 @@ public class SysExperienceComtroller extends BaseController{
 				}
 			}
 			warpper.in("id", experienceidSet);
-			warpper.orderByDesc("click_num");
+			warpper.orderByDesc("modify_time");
 			result.setData(sysExperienceMapper.selectPage(page, warpper));
 		} catch (Exception e) {
 			e.printStackTrace();

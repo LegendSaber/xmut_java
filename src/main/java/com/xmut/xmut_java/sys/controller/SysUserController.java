@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
 import com.xmut.xmut_java.sys.entity.SysUser;
@@ -70,6 +71,31 @@ public class SysUserController extends BaseController{
 			request.getSession().removeAttribute("user");
 		}
 		result.success("退出登录成功");
+		
+		return result;
+	}
+	
+	@RequestMapping("/cpassword")
+	public Result cpassword(String oldPass, String newPass, HttpServletRequest request) {
+		Result result = new Result();
+		SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+		String username = currentUser.getUsername();
+		SysUser params = new SysUser();
+		Long id = currentUser.getId();
+		
+		params.setUsername(username);
+		params.setPassword(oldPass);
+		
+		SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(params));
+		
+		if (user == null) {
+			result.fail("旧密码输入错误，请重新输入!");
+		}else {
+			currentUser.setPassword(newPass);
+			sysUserMapper.update(currentUser, new UpdateWrapper<SysUser>().eq("id", id));
+			result.success("修改密码成功,请重新登录!");
+			request.getSession().removeAttribute("user");
+		}
 		
 		return result;
 	}
