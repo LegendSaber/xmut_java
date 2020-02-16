@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.xmut.xmut_java.common.BaseEntity;
 
-public class SysUserAndExperience extends BaseEntity{
+public class SysUserExperience extends BaseEntity{
 	@TableId(value="id", type=IdType.AUTO)
 	private Long id;
 	private Long userId;

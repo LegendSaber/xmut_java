@@ -14,6 +14,7 @@ public class SysExperience extends BaseEntity{
 	private String content;
 	private Date createTime;
 	private Date modifyTime;
+	private Long favorNum;
 	
 	
 	public Long getId() {
@@ -51,5 +52,11 @@ public class SysExperience extends BaseEntity{
 	}
 	public void setModifyTime(Date modifyTime) {
 		this.modifyTime = modifyTime;
+	}
+	public Long getFavorNum() {
+		return favorNum;
+	}
+	public void setFavorNum(Long favorNum) {
+		this.favorNum = favorNum;
 	}
 }
