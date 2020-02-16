@@ -16,7 +16,6 @@ public class SysExperience extends BaseEntity{
 	private Date modifyTime;
 	private Long favorNum;
 	
-	
 	public Long getId() {
 		return id;
 	}

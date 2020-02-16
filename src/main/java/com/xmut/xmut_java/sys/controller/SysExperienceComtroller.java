@@ -16,9 +16,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
 import com.xmut.xmut_java.sys.entity.SysExperience;
+import com.xmut.xmut_java.sys.entity.SysFavorExperience;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysUserExperience;
 import com.xmut.xmut_java.sys.mapper.SysExperienceMapper;
+import com.xmut.xmut_java.sys.mapper.SysFavorExperienceMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserExperienceMapper;
 
 @RestController
@@ -30,16 +32,19 @@ public class SysExperienceComtroller extends BaseController{
 	@Autowired
 	private SysUserExperienceMapper sysUserExperienceMapper;
 	
+	@Autowired
+	private SysFavorExperienceMapper sysFavorExperienceMapper;
+	
 	@RequestMapping("/getAll")
-	public Result getAll(int currentPage, int pageSize) {
+	public Result getAll(int currentPage, int pageSize, int flag) {
 		Result result = new Result();
 		try {
 			Page<SysExperience> page = new Page<SysExperience>(currentPage, pageSize);
 			SysExperience parms = new SysExperience();
 			QueryWrapper<SysExperience> warpper = new QueryWrapper<SysExperience>(parms);
 			
-			warpper.orderByDesc("modify_time");
-
+			if (flag == 1) warpper.orderByDesc("modify_time");
+			else if (flag == 2) warpper.orderByDesc("favor_num"); 
 			result.setData(sysExperienceMapper.selectPage(page, warpper));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -67,6 +72,38 @@ public class SysExperienceComtroller extends BaseController{
 					experienceidSet.add(userandexperience.getExperienceId());
 				}
 			}
+			warpper.in("id", experienceidSet);
+			warpper.orderByDesc("modify_time");
+			result.setData(sysExperienceMapper.selectPage(page, warpper));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getFavorExperience")
+	public Result getFavorExperience(int currentPage, int pageSize, HttpServletRequest request) {
+		Result result = new Result();
+		
+		try {
+			Page<SysExperience> page = new Page<SysExperience>(currentPage, pageSize);
+			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+			SysExperience parms = new SysExperience();
+			QueryWrapper<SysExperience> warpper = new QueryWrapper<SysExperience>(parms);
+			Set<Long> experienceidSet = new HashSet<Long>();
+			SysFavorExperience queryExperience = new SysFavorExperience();
+			
+			queryExperience.setUserId(currentUser.getId());
+			List<SysFavorExperience> experienceList = sysFavorExperienceMapper.selectList(new QueryWrapper<SysFavorExperience>(queryExperience));
+			
+			
+			if (experienceList != null && !experienceList.isEmpty()) {
+				for (SysFavorExperience userandexperience : experienceList) {
+					experienceidSet.add(userandexperience.getExperienceId());
+				}
+			}
+			
 			warpper.in("id", experienceidSet);
 			warpper.orderByDesc("modify_time");
 			result.setData(sysExperienceMapper.selectPage(page, warpper));

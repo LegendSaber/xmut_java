@@ -1,5 +1,7 @@
 package com.xmut.xmut_java.sys.entity;
 
+import java.util.Date;
+
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.xmut.xmut_java.common.BaseEntity;
@@ -9,7 +11,7 @@ public class SysFavorExperience extends BaseEntity{
 	private Long id;
 	private Long userId;
 	private Long experienceId;
-	
+	private Date modifyTime;
 	
 	public Long getId() {
 		return id;
@@ -28,5 +30,11 @@ public class SysFavorExperience extends BaseEntity{
 	}
 	public void setExperienceId(Long experienceId) {
 		this.experienceId = experienceId;
+	}
+	public Date getModifyTime() {
+		return modifyTime;
+	}
+	public void setModifyTime(Date modifyTime) {
+		this.modifyTime = modifyTime;
 	}
 }	
