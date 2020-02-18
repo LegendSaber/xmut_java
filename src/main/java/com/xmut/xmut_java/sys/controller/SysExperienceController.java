@@ -28,7 +28,7 @@ import com.xmut.xmut_java.sys.mapper.SysUserExperienceMapper;
 
 @RestController
 @RequestMapping("/sysExperience")
-public class SysExperienceComtroller extends BaseController{
+public class SysExperienceController extends BaseController{
 	@Autowired
 	private SysExperienceMapper sysExperienceMapper;
 	
