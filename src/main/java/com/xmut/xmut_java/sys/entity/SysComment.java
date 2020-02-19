@@ -3,6 +3,8 @@ package com.xmut.xmut_java.sys.entity;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.xmut.xmut_java.common.BaseEntity;
@@ -14,7 +16,7 @@ public class SysComment extends BaseEntity{
 	private String content;
 	private Date createTime;
 	private Long favorNum;
-	private List<SysComment> sonComment;
+	private List<SysSonComment> sonComment;
 	
 	public Long getId() {
 		return id;
@@ -46,10 +48,10 @@ public class SysComment extends BaseEntity{
 	public void setFavorNum(Long favorNum) {
 		this.favorNum = favorNum;
 	}
-	public List<SysComment> getSonComment() {
+	public List<SysSonComment> getSonComment() {
 		return sonComment;
 	}
-	public void setSonComment(List<SysComment> sonComment) {
+	public void setSonComment(List<SysSonComment> sonComment) {
 		this.sonComment = sonComment;
 	}
 }

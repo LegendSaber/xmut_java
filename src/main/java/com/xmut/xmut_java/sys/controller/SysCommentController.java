@@ -1,5 +1,6 @@
 package com.xmut.xmut_java.sys.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -12,14 +13,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
 import com.xmut.xmut_java.sys.entity.SysComment;
+import com.xmut.xmut_java.sys.entity.SysCommentRelation;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysExperienceComment;
+import com.xmut.xmut_java.sys.entity.SysFavorComment;
+import com.xmut.xmut_java.sys.entity.SysSonComment;
 import com.xmut.xmut_java.sys.mapper.SysCommentMapper;
+import com.xmut.xmut_java.sys.mapper.SysCommentRelationMapper;
 import com.xmut.xmut_java.sys.mapper.SysExperienceCommentMapper;
+import com.xmut.xmut_java.sys.mapper.SysFavorCommentMapper;
+import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 
 @RestController
 @RequestMapping("/sysComment")
@@ -29,6 +38,15 @@ public class SysCommentController extends BaseController{
 	
 	@Autowired
 	private SysExperienceCommentMapper sysExperienceCommentMapper;
+	
+	@Autowired
+	private SysFavorCommentMapper sysFavorCommentMapper;
+	
+	@Autowired
+	private SysSonCommentMapper sysSonCommentMapper;
+	
+	@Autowired
+	private SysCommentRelationMapper sysCommentRelationMapper;
 	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, Long id, int flag) {
@@ -53,7 +71,30 @@ public class SysCommentController extends BaseController{
 			warpper.in("id", commentidSet);
 			if (flag == 1) warpper.orderByDesc("create_time");
 			else warpper.orderByDesc("favor_num");
-			result.setData(sysCommentMapper.selectPage(page, warpper));
+			IPage p = sysCommentMapper.selectPage(page, warpper);
+			
+			if (p != null) {
+				List<SysComment> last = new ArrayList<SysComment>();
+				List<SysComment> comment = p.getRecords();
+				for (SysComment c : comment) {
+					Long fatherId = c.getId();
+					SysCommentRelation queryRelation = new SysCommentRelation();
+					queryRelation.setFatherId(fatherId);
+					List<SysCommentRelation> relationList = sysCommentRelationMapper.selectList(new QueryWrapper<SysCommentRelation>(queryRelation));
+					List<SysSonComment> sonCommentList = new ArrayList<SysSonComment>();
+					for (SysCommentRelation r : relationList) {
+						SysSonComment sonParams = new SysSonComment();
+						
+						sonParams.setId(r.getSonId());
+						SysSonComment addSon = sysSonCommentMapper.selectOne(new QueryWrapper<SysSonComment>(sonParams));
+						sonCommentList.add(addSon);
+					}
+					c.setSonComment(sonCommentList);
+					last.add(c);
+				}
+				p.setRecords(last);
+				result.setData(p);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -73,19 +114,75 @@ public class SysCommentController extends BaseController{
 			params.setContent(content);
 			params.setCreateTime(new Date());
 			params.setFavorNum((long) 0);
+			params.setSonComment(null);
 			
 			sysCommentMapper.insert(params);
-			SysComment comment = sysCommentMapper.selectOne(new QueryWrapper<SysComment>(params));
-			
-			if (comment != null) {
-				Long commentId = comment.getId();
-				SysExperienceComment params2 = new SysExperienceComment();
+			Long commentId = params.getId();
+			SysExperienceComment params2 = new SysExperienceComment();
 				
-				params2.setExperienceId(id);
-				params2.setCommentId(commentId);
-				sysExperienceCommentMapper.insert(params2);
-				result.setMessage("评论成功，点击确定前往查看!");
+			params2.setExperienceId(id);
+			params2.setCommentId(commentId);
+			sysExperienceCommentMapper.insert(params2);
+			result.setMessage("评论成功，点击确定前往查看!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/recommend")
+	public Result recommend(Long id, HttpServletRequest request) {
+		Result result = new Result();
+		
+		try {
+			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+			Long userId = currentUser.getId();
+			SysFavorComment params = new SysFavorComment();
+			params.setUserId(userId);
+			params.setCommentId(id);
+			
+			SysFavorComment hascomment = sysFavorCommentMapper.selectOne(new QueryWrapper<SysFavorComment>(params));
+			
+			if (hascomment == null) {
+				SysComment commentParams = new SysComment();
+				commentParams.setId(id);
+				SysComment comment = sysCommentMapper.selectOne(new QueryWrapper<SysComment>(commentParams));
+				
+				comment.setFavorNum(comment.getFavorNum() + 1);
+				sysCommentMapper.update(comment, new UpdateWrapper<SysComment>().eq("id", id));
+				
+				SysFavorComment favor = new SysFavorComment();
+				favor.setCommentId(id);
+				favor.setUserId(userId);
+				sysFavorCommentMapper.insert(favor);
+				result.success("推荐成功!");
+			} else {
+				result.fail("已经推荐过了");
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/insertSon")
+	public Result insertSon(Long id, String author, String content, HttpServletRequest request) {
+		Result result = new Result();
+		
+		try {
+			SysCommentRelation relationParams = new SysCommentRelation();
+			SysSonComment params = new SysSonComment();
+			params.setAuthor(author);
+			params.setContent(content);
+			params.setCreateTime(new Date());
+			
+			sysSonCommentMapper.insert(params);
+			relationParams.setFatherId(id);
+			relationParams.setSonId(params.getId());
+			sysCommentRelationMapper.insert(relationParams);
+			result.setMessage("回复成功，点击确定查看!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
