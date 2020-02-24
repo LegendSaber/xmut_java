@@ -168,13 +168,14 @@ public class SysCommentController extends BaseController{
 	}
 	
 	@RequestMapping("/insertSon")
-	public Result insertSon(Long id, String author, String content, HttpServletRequest request) {
+	public Result insertSon(Long id, String content, HttpServletRequest request) {
 		Result result = new Result();
 		
 		try {
+			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
 			SysCommentRelation relationParams = new SysCommentRelation();
 			SysSonComment params = new SysSonComment();
-			params.setAuthor(author);
+			params.setAuthor(currentUser.getUsername());
 			params.setContent(content);
 			params.setCreateTime(new Date());
 			
