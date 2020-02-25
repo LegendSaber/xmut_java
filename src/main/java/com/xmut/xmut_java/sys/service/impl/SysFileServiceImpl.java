@@ -4,6 +4,7 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xmut.xmut_java.sys.entity.SysFile;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysUserFile;
@@ -33,5 +34,15 @@ public class SysFileServiceImpl implements SysFileService{
 		userFileParams.setUserId(currentUser.getId());
 		userFileParams.setFileId(file.getId());
 		sysUserFileMapper.insert(userFileParams);
+	}
+	
+	public SysFile getFile(Long id) {
+		SysFile file = null;
+		SysFile queryFile = new SysFile();
+		
+		queryFile.setId(id);
+		file = sysFileMapper.selectOne(new QueryWrapper<SysFile>(queryFile));
+		
+		return file;
 	}
 }

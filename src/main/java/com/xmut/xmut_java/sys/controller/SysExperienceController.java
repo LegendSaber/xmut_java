@@ -2,6 +2,7 @@ package com.xmut.xmut_java.sys.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -167,11 +168,22 @@ public class SysExperienceController extends BaseController{
 			Long userId = currentUser.getId();
 			Map<String, Object> columnMap = new HashMap<String, Object>();
 			Map<String, Object> exColumnMap = new HashMap<String, Object>();
+			SysFavorExperience params = new SysFavorExperience();
+			List<Long> idList = new ArrayList<Long>();
+			params.setExperienceId(id);
+			List<SysFavorExperience> favorList = sysFavorExperienceMapper.selectList(new QueryWrapper<SysFavorExperience>(params));
+			
+			if (favorList != null && !favorList.isEmpty()) {
+				for (SysFavorExperience favor : favorList) {
+					idList.add(favor.getId());
+				}
+			}
+			sysFavorExperienceMapper.deleteBatchIds(idList);
+			
 			columnMap.put("user_id", userId);
 			columnMap.put("experience_id", id);
 			
 			sysUserExperienceMapper.deleteByMap(columnMap);
-			sysFavorExperienceMapper.deleteByMap(columnMap);
 			
 			exColumnMap.put("id", id);
 			
