@@ -19,12 +19,21 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
+import com.xmut.xmut_java.sys.entity.SysCommentRelation;
 import com.xmut.xmut_java.sys.entity.SysExperience;
+import com.xmut.xmut_java.sys.entity.SysExperienceComment;
+import com.xmut.xmut_java.sys.entity.SysFavorComment;
 import com.xmut.xmut_java.sys.entity.SysFavorExperience;
+import com.xmut.xmut_java.sys.entity.SysSonComment;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysUserExperience;
+import com.xmut.xmut_java.sys.mapper.SysCommentMapper;
+import com.xmut.xmut_java.sys.mapper.SysCommentRelationMapper;
+import com.xmut.xmut_java.sys.mapper.SysExperienceCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysExperienceMapper;
+import com.xmut.xmut_java.sys.mapper.SysFavorCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysFavorExperienceMapper;
+import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserExperienceMapper;
 
 @RestController
@@ -38,6 +47,21 @@ public class SysExperienceController extends BaseController{
 	
 	@Autowired
 	private SysFavorExperienceMapper sysFavorExperienceMapper;
+	
+	@Autowired
+	private SysExperienceCommentMapper sysExperienceCommentMapper;
+	
+	@Autowired
+	private SysCommentRelationMapper sysCommentRelationMapper;
+	
+	@Autowired
+	private SysSonCommentMapper sysSonCommentMapper;
+	
+	@Autowired
+	private SysCommentMapper sysCommentMapper;
+	
+	@Autowired
+	private SysFavorCommentMapper sysFavorCommentMapper;
 	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, int flag) {
@@ -177,8 +201,8 @@ public class SysExperienceController extends BaseController{
 				for (SysFavorExperience favor : favorList) {
 					idList.add(favor.getId());
 				}
+				sysFavorExperienceMapper.deleteBatchIds(idList);
 			}
-			sysFavorExperienceMapper.deleteBatchIds(idList);
 			
 			columnMap.put("user_id", userId);
 			columnMap.put("experience_id", id);
@@ -189,6 +213,46 @@ public class SysExperienceController extends BaseController{
 			
 			sysExperienceMapper.deleteByMap(exColumnMap);
 			
+			List<Long> commentIdList = new ArrayList<Long>();
+			List<Long> sonCommentIdList = new ArrayList<Long>();
+			SysExperienceComment commentParams = new SysExperienceComment();
+			commentParams.setExperienceId(id);
+			List<SysExperienceComment> comments = sysExperienceCommentMapper.selectList(new QueryWrapper<SysExperienceComment>(commentParams));
+			
+			if (comments != null && !comments.isEmpty()) {
+				for (SysExperienceComment comment : comments) {
+					Map<String, Object> commentMap = new HashMap<String, Object>();
+					commentMap.put("id", comment.getCommentId());
+					sysCommentMapper.deleteByMap(commentMap);
+					commentIdList.add(comment.getId());
+					SysCommentRelation relationParams = new SysCommentRelation();
+					relationParams.setFatherId(comment.getCommentId());
+					List<SysCommentRelation> commentsRelation = sysCommentRelationMapper.selectList(new QueryWrapper<SysCommentRelation>(relationParams));
+					
+					if (commentsRelation != null && !commentsRelation.isEmpty()) {
+						for (SysCommentRelation commentRelation : commentsRelation) {
+							sonCommentIdList.add(commentRelation.getId());
+							Map<String, Object> sonMap = new HashMap<String, Object>();
+							sonMap.put("id", commentRelation.getSonId());
+							sysSonCommentMapper.deleteByMap(sonMap);
+						}
+						sysCommentRelationMapper.deleteBatchIds(sonCommentIdList);
+					}
+					
+					SysFavorComment favorCommentParams = new SysFavorComment();
+					favorCommentParams.setCommentId(comment.getCommentId());
+					List<SysFavorComment> favorComments = sysFavorCommentMapper.selectList(new QueryWrapper<SysFavorComment>(favorCommentParams));
+					List<Long> favorCommentList = new ArrayList<Long>();
+					
+					if (favorComments != null && !favorComments.isEmpty()) {
+						for (SysFavorComment favorComment : favorComments) {
+							favorCommentList.add(favorComment.getId());
+						}
+						sysFavorCommentMapper.deleteBatchIds(favorCommentList);
+					}
+				}
+				sysExperienceCommentMapper.deleteBatchIds(commentIdList);
+			}
 			result.setMessage("删除成功，点击确定前往查看!");
 		} catch (Exception e) {
 			e.printStackTrace();

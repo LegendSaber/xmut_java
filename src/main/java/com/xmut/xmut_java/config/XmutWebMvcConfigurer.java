@@ -27,7 +27,7 @@ public class XmutWebMvcConfigurer implements WebMvcConfigurer {
 	@Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 添加一个拦截器
-        registry.addInterceptor(new RequestIntercept() );
+        registry.addInterceptor(new RequestIntercept());
     }
 
     @Override

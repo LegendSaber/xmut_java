@@ -215,12 +215,12 @@ public class SysFileController extends BaseController{
 				for (SysFavorFile favor : favorList) {
 					idList.add(favor.getId());
 				}
-			}
-			sysFavorFileMapper.deleteBatchIds(idList);
+				sysFavorFileMapper.deleteBatchIds(idList);
+			}	
 			
 			columnMap.put("user_id", currentUser.getId());
 			columnMap.put("file_id", id);
-			sysFavorFileMapper.deleteByMap(columnMap);		
+			sysUserFileMapper.deleteByMap(columnMap);		
 			
 			columnMapFile.put("id", id);
 			sysFileMapper.deleteByMap(columnMapFile);
@@ -241,20 +241,17 @@ public class SysFileController extends BaseController{
 			if (file != null) {
 				response.reset();
 				// 配置文件下载
-				response.setHeader("Access-Control-Allow-Credentials", "true");
-				response.setHeader("Access-Control-Allow-Origin", request.getHeader("origin"));
-				response.setHeader("content-type", "application/octet-stream");
+                response.setHeader("content-type", "application/octet-stream");
                 response.setContentType("application/octet-stream");
                 // 下载文件能正常显示中文
-                response.setHeader("Content-Disposition", "attachment;filename=" + file.getFileName());
-				
-				//实现文件下载
+                response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(file.getFileName(), "UTF-8"));
+                
 				OutputStream out = response.getOutputStream();
-				out.write(file.getFileContent());
-				out.flush();
-				out.close();
+                out.write(file.getFileContent());
+                out.flush();
+                out.close();
 				
-				result.success("文件正在下载，请稍等!");
+				result.success("文件下载完成!");
 			}else {
 				result.fail("文件错误!");
 			}
