@@ -23,11 +23,13 @@ import com.xmut.xmut_java.sys.entity.SysCommentRelation;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysExperienceComment;
 import com.xmut.xmut_java.sys.entity.SysFavorComment;
+import com.xmut.xmut_java.sys.entity.SysKnowledgeComment;
 import com.xmut.xmut_java.sys.entity.SysSonComment;
 import com.xmut.xmut_java.sys.mapper.SysCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysCommentRelationMapper;
 import com.xmut.xmut_java.sys.mapper.SysExperienceCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysFavorCommentMapper;
+import com.xmut.xmut_java.sys.mapper.SysKnowledgeCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 
 @RestController
@@ -47,6 +49,9 @@ public class SysCommentController extends BaseController{
 	
 	@Autowired
 	private SysCommentRelationMapper sysCommentRelationMapper;
+	
+	@Autowired
+	private SysKnowledgeCommentMapper sysKnowledgeCommentMapper;
 	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, Long id, int flag) {
@@ -184,6 +189,87 @@ public class SysCommentController extends BaseController{
 			relationParams.setSonId(params.getId());
 			sysCommentRelationMapper.insert(relationParams);
 			result.setMessage("回复成功，点击确定查看!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/insertKnowledgeComment")
+	public Result insertKnowledgeComment(Long id, String content, HttpServletRequest request) {
+		Result result = new Result();
+		
+		try {
+			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+			SysComment commentParams = new SysComment();
+			SysKnowledgeComment params = new SysKnowledgeComment();
+			
+			commentParams.setAuthor(currentUser.getUsername());
+			commentParams.setContent(content);
+			commentParams.setCreateTime(new Date());
+			commentParams.setFavorNum((long)0);
+			
+			sysCommentMapper.insert(commentParams);
+			
+			params.setKnowledgeId(id);
+			params.setCommentId(commentParams.getId());
+			sysKnowledgeCommentMapper.insert(params);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getKnowledgeComment")
+	public Result getKnowledgeComment(int currentPage, int pageSize, Long id, int flag) {
+		Result result = new Result();
+		
+		try {
+			Page<SysComment> page = new Page<SysComment>(currentPage, pageSize);
+			SysComment params = new SysComment();
+			QueryWrapper<SysComment> wrapper = new QueryWrapper<SysComment>(params);
+			Set<Long> commentSet = new HashSet<Long>();
+			SysKnowledgeComment commentParams = new SysKnowledgeComment();
+			
+			commentParams.setKnowledgeId(id);
+			List<SysKnowledgeComment> commentList = sysKnowledgeCommentMapper.selectList(new QueryWrapper<SysKnowledgeComment>(commentParams));
+		
+			if (commentList != null && !commentList.isEmpty()) {
+				for (SysKnowledgeComment comment : commentList) {
+					commentSet.add(comment.getCommentId());
+				}
+			}
+			
+			wrapper.in("id", commentSet);
+			if (flag == 1) wrapper.orderByDesc("create_time");
+			else wrapper.orderByDesc("favor_num");
+			
+			IPage p = sysCommentMapper.selectPage(page, wrapper);
+			
+			if (p != null) {
+				List<SysComment> last = new ArrayList<SysComment>();
+				List<SysComment> comment = p.getRecords();
+				for (SysComment c : comment) {
+					Long fatherId = c.getId();
+					SysCommentRelation queryRelation = new SysCommentRelation();
+					queryRelation.setFatherId(fatherId);
+					List<SysCommentRelation> relationList = sysCommentRelationMapper.selectList(new QueryWrapper<SysCommentRelation>(queryRelation));
+					List<SysSonComment> sonCommentList = new ArrayList<SysSonComment>();
+					for (SysCommentRelation r : relationList) {
+						SysSonComment sonParams = new SysSonComment();
+						
+						sonParams.setId(r.getSonId());
+						SysSonComment addSon = sysSonCommentMapper.selectOne(new QueryWrapper<SysSonComment>(sonParams));
+						sonCommentList.add(addSon);
+					}
+					c.setSonComment(sonCommentList);
+					last.add(c);
+				}
+				p.setRecords(last);
+				result.setData(p);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

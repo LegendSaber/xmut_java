@@ -6,9 +6,13 @@ import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xmut.xmut_java.sys.entity.SysFile;
+import com.xmut.xmut_java.sys.entity.SysKnowledgePicture;
+import com.xmut.xmut_java.sys.entity.SysPicture;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysUserFile;
 import com.xmut.xmut_java.sys.mapper.SysFileMapper;
+import com.xmut.xmut_java.sys.mapper.SysKnowledgePictureMapper;
+import com.xmut.xmut_java.sys.mapper.SysPictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserFileMapper;
 import com.xmut.xmut_java.sys.service.SysFileService;
 
@@ -19,6 +23,12 @@ public class SysFileServiceImpl implements SysFileService{
 	
 	@Autowired
 	private SysUserFileMapper sysUserFileMapper;
+	
+	@Autowired
+	private SysPictureMapper sysPictureMapper;
+	
+	@Autowired
+	private SysKnowledgePictureMapper sysKnowledgePictureMapper;
 	
 	public void saveFile(String fileName, byte[] fileContent, SysUser currentUser) {
 		SysFile file = new SysFile();
@@ -44,5 +54,28 @@ public class SysFileServiceImpl implements SysFileService{
 		file = sysFileMapper.selectOne(new QueryWrapper<SysFile>(queryFile));
 		
 		return file;
+	}
+	
+	public void savePicture(String pictureName, byte[] pictureContent, Long id) {
+		SysPicture picture = new SysPicture();
+		SysKnowledgePicture knowledgePicture = new SysKnowledgePicture();
+		
+		picture.setPictureName(pictureName);
+		picture.setPictureContent(pictureContent);
+		sysPictureMapper.insert(picture);
+		
+		knowledgePicture.setKnowledgeId(id);
+		knowledgePicture.setPictureId(picture.getId());
+		sysKnowledgePictureMapper.insert(knowledgePicture);
+	}
+	
+	public SysPicture getPicture(Long id) {
+		SysPicture picture = null;
+		SysPicture queryPicture = new SysPicture();
+		
+		queryPicture.setId(id);
+		picture = sysPictureMapper.selectOne(new QueryWrapper<SysPicture>(queryPicture));
+		
+		return picture;
 	}
 }

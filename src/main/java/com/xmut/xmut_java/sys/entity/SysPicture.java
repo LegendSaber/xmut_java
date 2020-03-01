@@ -7,6 +7,7 @@ import com.xmut.xmut_java.common.BaseEntity;
 public class SysPicture extends BaseEntity{
 	@TableId(value="id", type=IdType.AUTO)
 	private Long id;
+	private String pictureName;
 	private byte[] pictureContent;
 	
 	public Long getId() {
@@ -14,6 +15,12 @@ public class SysPicture extends BaseEntity{
 	}
 	public void setId(Long id) {
 		this.id = id;
+	}
+	public String getPictureName() {
+		return pictureName;
+	}
+	public void setPictureName(String pictureName) {
+		this.pictureName = pictureName;
 	}
 	public byte[] getPictureContent() {
 		return pictureContent;

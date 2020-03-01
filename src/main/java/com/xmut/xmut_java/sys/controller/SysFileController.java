@@ -1,7 +1,5 @@
 package com.xmut.xmut_java.sys.controller;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
@@ -28,10 +26,13 @@ import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
 import com.xmut.xmut_java.sys.entity.SysFavorFile;
 import com.xmut.xmut_java.sys.entity.SysFile;
+import com.xmut.xmut_java.sys.entity.SysKnowledgePicture;
+import com.xmut.xmut_java.sys.entity.SysPicture;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysUserFile;
 import com.xmut.xmut_java.sys.mapper.SysFavorFileMapper;
 import com.xmut.xmut_java.sys.mapper.SysFileMapper;
+import com.xmut.xmut_java.sys.mapper.SysKnowledgePictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserFileMapper;
 import com.xmut.xmut_java.sys.service.SysFileService;
 
@@ -49,6 +50,9 @@ public class SysFileController extends BaseController{
 	
 	@Autowired
 	private SysFavorFileMapper sysFavorFileMapper;
+	
+	@Autowired
+	private SysKnowledgePictureMapper sysKnowledgePictureMapper;
 	
 	@RequestMapping("/upload")
 	public Result upload(HttpServletRequest request) {
@@ -255,6 +259,33 @@ public class SysFileController extends BaseController{
 			}else {
 				result.fail("文件错误!");
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	@RequestMapping("/loadPicture")
+	public Result loadPicture(Long id, HttpServletResponse response) {
+		Result result = new Result();
+		
+		try {
+			OutputStream out = response.getOutputStream();
+			response.setContentType("image/png");
+			SysKnowledgePicture pictureParams = new SysKnowledgePicture();
+			
+			pictureParams.setKnowledgeId(id);
+			List<SysKnowledgePicture> pictureList = sysKnowledgePictureMapper.selectList(new QueryWrapper<SysKnowledgePicture>(pictureParams));
+			
+			if (pictureList != null && !pictureList.isEmpty()) {
+				for (SysKnowledgePicture getPicture : pictureList) {
+					SysPicture picture = sysFileService.getPicture(getPicture.getId());
+					out.write(picture.getPictureContent());
+                    out.flush();    
+				}
+			}
+			out.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
