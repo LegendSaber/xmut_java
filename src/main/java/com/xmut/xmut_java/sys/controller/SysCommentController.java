@@ -128,7 +128,7 @@ public class SysCommentController extends BaseController{
 			params2.setExperienceId(id);
 			params2.setCommentId(commentId);
 			sysExperienceCommentMapper.insert(params2);
-			result.setMessage("评论成功，点击确定前往查看!");
+			result.success("评论成功，点击确定前往查看!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -215,6 +215,7 @@ public class SysCommentController extends BaseController{
 			params.setKnowledgeId(id);
 			params.setCommentId(commentParams.getId());
 			sysKnowledgeCommentMapper.insert(params);
+			result.success("评论成功,点击确定前往查看!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

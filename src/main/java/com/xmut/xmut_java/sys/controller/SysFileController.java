@@ -13,6 +13,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +34,7 @@ import com.xmut.xmut_java.sys.entity.SysUserFile;
 import com.xmut.xmut_java.sys.mapper.SysFavorFileMapper;
 import com.xmut.xmut_java.sys.mapper.SysFileMapper;
 import com.xmut.xmut_java.sys.mapper.SysKnowledgePictureMapper;
+import com.xmut.xmut_java.sys.mapper.SysPictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserFileMapper;
 import com.xmut.xmut_java.sys.service.SysFileService;
 
@@ -53,6 +55,9 @@ public class SysFileController extends BaseController{
 	
 	@Autowired
 	private SysKnowledgePictureMapper sysKnowledgePictureMapper;
+	
+	@Autowired
+	private SysPictureMapper sysPictureMapper;
 	
 	@RequestMapping("/upload")
 	public Result upload(HttpServletRequest request) {
@@ -271,8 +276,7 @@ public class SysFileController extends BaseController{
 		Result result = new Result();
 		
 		try {
-			OutputStream out = response.getOutputStream();
-			response.setContentType("image/png");
+			List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 			SysKnowledgePicture pictureParams = new SysKnowledgePicture();
 			
 			pictureParams.setKnowledgeId(id);
@@ -280,16 +284,44 @@ public class SysFileController extends BaseController{
 			
 			if (pictureList != null && !pictureList.isEmpty()) {
 				for (SysKnowledgePicture getPicture : pictureList) {
-					SysPicture picture = sysFileService.getPicture(getPicture.getId());
-					out.write(picture.getPictureContent());
-                    out.flush();    
+					Map<String, String> map = new HashMap<String, String>();
+					SysPicture picture = sysFileService.getPicture(getPicture.getPictureId());
+					byte[] data = picture.getPictureContent();
+					String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+					
+					map.put("id", "" + picture.getId());
+					map.put("name", picture.getPictureName());
+					map.put("img", img);
+					list.add(map);
 				}
 			}
-			out.close();
+			result.setData(list);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		return null;
+		return result;
+	}
+	
+	@RequestMapping("/deletePicture")
+	public Result deletePicture(Long knowledge_id, Long picture_id) {
+		Result result = new Result();
+		
+		try {
+			Map<String, Object> pictureMap = new HashMap<String, Object>();
+			Map<String, Object> map = new HashMap<String, Object>();
+			
+			pictureMap.put("id", picture_id);
+			sysPictureMapper.deleteByMap(pictureMap);
+			
+			map.put("knowledge_id", knowledge_id);
+			map.put("picture_id", picture_id);
+			
+			sysKnowledgePictureMapper.deleteByMap(map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
 	}
 }
