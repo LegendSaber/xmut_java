@@ -1,8 +1,11 @@
 package com.xmut.xmut_java.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.xmut.xmut_java.common.BaseEntity;
 
 public class SysAdmin extends BaseEntity{
+	@TableId(value = "id",type = IdType.AUTO)
 	private Long id;
 	private String name;
 	private String password;

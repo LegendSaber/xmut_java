@@ -9,10 +9,11 @@ public class SysUser extends BaseEntity{
 	private Long id;
 	private String username;
 	private String password;
-	private Long flag;
+	private String roleName;
 	private Long score;
 	private Long isSign;
 	private Long signDay;
+	private Long isUsed;
 	
 	public Long getId() {
 		return id;
@@ -32,11 +33,11 @@ public class SysUser extends BaseEntity{
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	public Long getFlag() {
-		return flag;
+	public String getRoleName() {
+		return roleName;
 	}
-	public void setFlag(Long flag) {
-		this.flag = flag;
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
 	}
 	public Long getScore() {
 		return score;
@@ -55,5 +56,11 @@ public class SysUser extends BaseEntity{
 	}
 	public void setSignDay(Long signDay) {
 		this.signDay = signDay;
+	}
+	public Long getIsUsed() {
+		return isUsed;
+	}
+	public void setIsUsed(Long isUsed) {
+		this.isUsed = isUsed;
 	}
 }

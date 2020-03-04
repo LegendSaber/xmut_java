@@ -35,6 +35,7 @@ import com.xmut.xmut_java.sys.mapper.SysFavorCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysFavorExperienceMapper;
 import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserExperienceMapper;
+import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 
 @RestController
 @RequestMapping("/sysExperience")
@@ -62,6 +63,9 @@ public class SysExperienceController extends BaseController{
 	
 	@Autowired
 	private SysFavorCommentMapper sysFavorCommentMapper;
+	
+	@Autowired
+	private SysUserMapper sysUserMapper;
 	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, int flag) {
@@ -305,6 +309,109 @@ public class SysExperienceController extends BaseController{
 				result.fail("不是我的");
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getForAdmin")
+	public Result getForAdmin(int currentPage, int pageSize, String query, String value) {
+		Result result = new Result();
+		
+		try {
+			Page<SysExperience> page = new Page<SysExperience>(currentPage, pageSize);
+			SysExperience params = new SysExperience();
+			QueryWrapper<SysExperience> wrapper = new QueryWrapper<SysExperience>(params);
+		
+			if (query != null) {
+				if (value.equals("标题")) wrapper.like("title", query);
+				else wrapper.like("author", query);
+			}
+			wrapper.orderByDesc("modify_time");
+			result.setData(sysExperienceMapper.selectPage(page, wrapper));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/deleteExperienceByAdmin")
+	public Result deleteExperienceByAdmin(Long id, String author) {
+		Result result = new Result();
+		
+		try {
+			SysUser userParams = new SysUser();
+			userParams.setUsername(author);
+			SysUser deleteUser = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			Long userId = deleteUser.getId();
+			
+			Map<String, Object> columnMap = new HashMap<String, Object>();
+			Map<String, Object> exColumnMap = new HashMap<String, Object>();
+			SysFavorExperience params = new SysFavorExperience();
+			List<Long> idList = new ArrayList<Long>();
+			params.setExperienceId(id);
+			List<SysFavorExperience> favorList = sysFavorExperienceMapper.selectList(new QueryWrapper<SysFavorExperience>(params));
+			
+			if (favorList != null && !favorList.isEmpty()) {
+				for (SysFavorExperience favor : favorList) {
+					idList.add(favor.getId());
+				}
+				sysFavorExperienceMapper.deleteBatchIds(idList);
+			}
+			
+			columnMap.put("user_id", userId);
+			columnMap.put("experience_id", id);
+			
+			sysUserExperienceMapper.deleteByMap(columnMap);
+			
+			exColumnMap.put("id", id);
+			
+			sysExperienceMapper.deleteByMap(exColumnMap);
+			
+			List<Long> commentIdList = new ArrayList<Long>();
+			List<Long> sonCommentIdList = new ArrayList<Long>();
+			SysExperienceComment commentParams = new SysExperienceComment();
+			commentParams.setExperienceId(id);
+			List<SysExperienceComment> comments = sysExperienceCommentMapper.selectList(new QueryWrapper<SysExperienceComment>(commentParams));
+			
+			if (comments != null && !comments.isEmpty()) {
+				for (SysExperienceComment comment : comments) {
+					Map<String, Object> commentMap = new HashMap<String, Object>();
+					commentMap.put("id", comment.getCommentId());
+					sysCommentMapper.deleteByMap(commentMap);
+					commentIdList.add(comment.getId());
+					SysCommentRelation relationParams = new SysCommentRelation();
+					relationParams.setFatherId(comment.getCommentId());
+					List<SysCommentRelation> commentsRelation = sysCommentRelationMapper.selectList(new QueryWrapper<SysCommentRelation>(relationParams));
+					
+					if (commentsRelation != null && !commentsRelation.isEmpty()) {
+						for (SysCommentRelation commentRelation : commentsRelation) {
+							sonCommentIdList.add(commentRelation.getId());
+							Map<String, Object> sonMap = new HashMap<String, Object>();
+							sonMap.put("id", commentRelation.getSonId());
+							sysSonCommentMapper.deleteByMap(sonMap);
+						}
+						sysCommentRelationMapper.deleteBatchIds(sonCommentIdList);
+					}
+					
+					SysFavorComment favorCommentParams = new SysFavorComment();
+					favorCommentParams.setCommentId(comment.getCommentId());
+					List<SysFavorComment> favorComments = sysFavorCommentMapper.selectList(new QueryWrapper<SysFavorComment>(favorCommentParams));
+					List<Long> favorCommentList = new ArrayList<Long>();
+					
+					if (favorComments != null && !favorComments.isEmpty()) {
+						for (SysFavorComment favorComment : favorComments) {
+							favorCommentList.add(favorComment.getId());
+						}
+						sysFavorCommentMapper.deleteBatchIds(favorCommentList);
+					}
+				}
+				sysExperienceCommentMapper.deleteBatchIds(commentIdList);
+			}
+			result.setMessage("删除成功，点击确定前往查看!");
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 		

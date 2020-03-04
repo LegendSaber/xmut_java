@@ -447,4 +447,26 @@ public class SysKnowledgeController extends BaseController{
 		
 		return result;
 	}
+	
+	@RequestMapping("/getForAdmin")
+	public Result getForAdmin(int currentPage, int pageSize, String query, String value) {
+		Result result = new Result();
+		
+		try {
+			Page<SysKnowledge> page = new Page<SysKnowledge>(currentPage, pageSize);
+			SysKnowledge params = new SysKnowledge();
+			QueryWrapper<SysKnowledge> wrapper = new QueryWrapper<SysKnowledge>(params);
+		
+			if (query != null) {
+				if (value.equals("标题")) wrapper.like("title", query);
+				else wrapper.like("author", query);
+			}
+			wrapper.orderByDesc("modify_time");
+			result.setData(sysKnowledgeMapper.selectPage(page, wrapper));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
 }
