@@ -11,7 +11,6 @@ public class SysUser extends BaseEntity{
 	private String password;
 	private String roleName;
 	private Long score;
-	private Long isSign;
 	private Long signDay;
 	private Long isUsed;
 	
@@ -44,12 +43,6 @@ public class SysUser extends BaseEntity{
 	}
 	public void setScore(Long score) {
 		this.score = score;
-	}
-	public Long getIsSign() {
-		return this.isSign;
-	}
-	public void setIsSign (Long isSign) {
-		this.isSign = isSign;
 	}
 	public Long getSignDay() {
 		return this.signDay;

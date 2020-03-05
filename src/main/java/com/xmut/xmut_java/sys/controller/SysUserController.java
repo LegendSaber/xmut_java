@@ -34,7 +34,6 @@ public class SysUserController extends BaseController{
 			params.setPassword(password);
 			params.setRoleName(roleName);
 			params.setScore((long)0);
-			params.setIsSign((long)0);
 			params.setSignDay((long) 0);
 			params.setIsUsed((long)1);
 			

@@ -10,6 +10,7 @@ public class SysAdmin extends BaseEntity{
 	private String name;
 	private String password;
 	private String roleName;
+	private Long isUsed;
 	
 	public Long getId() {
 		return id;
@@ -34,5 +35,11 @@ public class SysAdmin extends BaseEntity{
 	}
 	public void setRoleName(String roleName) {
 		this.roleName = roleName;
+	}
+	public Long getIsUsed() {
+		return isUsed;
+	}
+	public void setIsUsed(Long isUsed) {
+		this.isUsed = isUsed;
 	}
 }
