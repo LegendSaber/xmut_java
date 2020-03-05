@@ -324,7 +324,7 @@ public class SysExperienceController extends BaseController{
 			SysExperience params = new SysExperience();
 			QueryWrapper<SysExperience> wrapper = new QueryWrapper<SysExperience>(params);
 		
-			if (query != null) {
+			if (!query.equals("")) {
 				if (value.equals("标题")) wrapper.like("title", query);
 				else wrapper.like("author", query);
 			}
@@ -412,6 +412,26 @@ public class SysExperienceController extends BaseController{
 			}
 			result.setMessage("删除成功，点击确定前往查看!");
 		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getExperienceById")
+	public Result getExperienceById(Long id) {
+		Result result = new Result();
+		
+		try {
+			SysExperience params = new SysExperience();
+			
+			params.setId(id);
+			
+			SysExperience experience = sysExperienceMapper.selectOne(new QueryWrapper<SysExperience>(params));
+			
+			if (experience != null) result.setData(experience);
+			else result.fail("这篇文章已经被删除!");
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		

@@ -36,6 +36,7 @@ import com.xmut.xmut_java.sys.mapper.SysFileMapper;
 import com.xmut.xmut_java.sys.mapper.SysKnowledgePictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysPictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserFileMapper;
+import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 import com.xmut.xmut_java.sys.service.SysFileService;
 
 @RestController
@@ -58,6 +59,9 @@ public class SysFileController extends BaseController{
 	
 	@Autowired
 	private SysPictureMapper sysPictureMapper;
+	
+	@Autowired
+	private SysUserMapper sysUserMapper;
 	
 	@RequestMapping("/upload")
 	public Result upload(HttpServletRequest request) {
@@ -242,7 +246,7 @@ public class SysFileController extends BaseController{
 	}
 	
 	@RequestMapping("/download")
-	public Result download(Long id, HttpServletResponse response, HttpServletRequest request) {
+	public Result download(Long id, HttpServletResponse response) {
 		Result result = new Result();
 		
 		try {
@@ -318,6 +322,65 @@ public class SysFileController extends BaseController{
 			map.put("picture_id", picture_id);
 			
 			sysKnowledgePictureMapper.deleteByMap(map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getForAdmin")
+	public Result getForAdmin(int currentPage, int pageSize, String query, String value) {
+		Result result = new Result();
+		
+		try {
+			Page<SysFile> page = new Page<SysFile>(currentPage, pageSize);
+			SysFile params = new SysFile();
+			QueryWrapper<SysFile> wrapper = new QueryWrapper<SysFile>(params);
+			
+			if (!query.equals("")) {
+				if (value.equals("作者")) wrapper.like("author", query);
+				else wrapper.like("file_name", query);
+			}
+			
+			wrapper.orderByDesc("create_time");
+			result.setData(sysFileMapper.selectPage(page, wrapper));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/deleteByAdmin")
+	public Result deleteByAdmin(Long id, String author) {
+		Result result = new Result();
+		
+		try {
+			SysUser userParams = new SysUser();
+			userParams.setUsername(author);
+			SysUser currentUser = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			Map<String, Object> columnMap = new HashMap<String, Object>();
+			Map<String, Object> columnMapFile = new HashMap<String, Object>();
+			List<Long> idList = new ArrayList<Long>();
+			SysFavorFile params = new SysFavorFile();
+			params.setFileId(id);
+			List<SysFavorFile> favorList = sysFavorFileMapper.selectList(new QueryWrapper<SysFavorFile>());
+			
+			if (favorList != null && !favorList.isEmpty()) {
+				for (SysFavorFile favor : favorList) {
+					idList.add(favor.getId());
+				}
+				sysFavorFileMapper.deleteBatchIds(idList);
+			}	
+			
+			columnMap.put("user_id", currentUser.getId());
+			columnMap.put("file_id", id);
+			sysUserFileMapper.deleteByMap(columnMap);		
+			
+			columnMapFile.put("id", id);
+			sysFileMapper.deleteByMap(columnMapFile);
+			result.success("删除文件成功，点击确定前往查看!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

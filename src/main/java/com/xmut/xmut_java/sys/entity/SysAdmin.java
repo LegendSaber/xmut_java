@@ -9,6 +9,7 @@ public class SysAdmin extends BaseEntity{
 	private Long id;
 	private String name;
 	private String password;
+	private String roleName;
 	
 	public Long getId() {
 		return id;
@@ -27,5 +28,11 @@ public class SysAdmin extends BaseEntity{
 	}
 	public void setPassword(String password) {
 		this.password = password;
+	}
+	public String getRoleName() {
+		return roleName;
+	}
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
 	}
 }

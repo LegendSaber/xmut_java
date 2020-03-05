@@ -39,6 +39,7 @@ import com.xmut.xmut_java.sys.mapper.SysKnowledgePictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysPictureMapper;
 import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserKnowledgeMapper;
+import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 import com.xmut.xmut_java.sys.service.SysFileService;
 
 @RestController
@@ -76,6 +77,9 @@ public class SysKnowledgeController extends BaseController{
 	
 	@Autowired
 	private SysPictureMapper sysPictureMapper;
+	
+	@Autowired
+	private SysUserMapper sysUserMapper;
 	
 	@RequestMapping("/insert")
 	public Result insert(String title, String content, String category, HttpServletRequest request) {
@@ -457,12 +461,136 @@ public class SysKnowledgeController extends BaseController{
 			SysKnowledge params = new SysKnowledge();
 			QueryWrapper<SysKnowledge> wrapper = new QueryWrapper<SysKnowledge>(params);
 		
-			if (query != null) {
+			if (!query.equals("")) {
 				if (value.equals("标题")) wrapper.like("title", query);
 				else wrapper.like("author", query);
 			}
 			wrapper.orderByDesc("modify_time");
 			result.setData(sysKnowledgeMapper.selectPage(page, wrapper));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getKnowledgeById")
+	public Result getKnowledgeById(Long id) {
+		Result result = new Result();
+		
+		try {
+			SysKnowledge params = new SysKnowledge();
+			
+			params.setId(id);
+			SysKnowledge knowledge = sysKnowledgeMapper.selectOne(new QueryWrapper<SysKnowledge>(params));
+			
+			if (knowledge != null) {
+				result.setData(knowledge);
+			}else {
+				result.fail("这边文章已经被删除!");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/deleteByAdmin")
+	public Result deleteByAdmin(Long id, String author) {
+		Result result = new Result();
+		
+		try {
+			SysUser userParams = new SysUser();
+			userParams.setUsername(author);
+			SysUser currentUser = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			Long userId = currentUser.getId();
+			Map<String, Object> columnMap = new HashMap<String, Object>();
+			Map<String, Object> knColumnMap = new HashMap<String, Object>();
+			List<Long> idList = new ArrayList<Long>();
+			SysFavorKnowledge favorParams = new SysFavorKnowledge();
+			
+			favorParams.setKnowledgeId(id);
+			List<SysFavorKnowledge> favorList = sysFavorKnowledgeMapper.selectList(new QueryWrapper<SysFavorKnowledge>(favorParams));
+			
+			if (favorList != null && !favorList.isEmpty()) {
+				for (SysFavorKnowledge favor : favorList) {
+					idList.add(favor.getId());
+				}
+				sysFavorKnowledgeMapper.deleteBatchIds(idList);
+			}
+			
+			columnMap.put("user_id", userId);
+			columnMap.put("knowledge_id", id);
+			
+			sysUserKnowledgeMapper.deleteByMap(columnMap);
+			
+			knColumnMap.put("id", id);
+			
+			sysKnowledgeMapper.deleteByMap(knColumnMap);
+			
+			List<Long> commentIdList = new ArrayList<Long>();
+			List<Long> sonCommentIdList = new ArrayList<Long>();
+			SysKnowledgeComment commentParams = new SysKnowledgeComment();
+			
+			commentParams.setKnowledgeId(id);
+			List<SysKnowledgeComment> comments = sysKnowledgeCommentMapper.selectList(new QueryWrapper<SysKnowledgeComment>(commentParams));
+			
+			if (comments != null && !comments.isEmpty()) {
+				for (SysKnowledgeComment comment : comments) {
+					Map<String, Object> commentMap = new HashMap<String, Object>();
+					commentMap.put("id", comment.getCommentId());
+					sysCommentMapper.deleteByMap(commentMap);
+					commentIdList.add(comment.getId());
+					SysCommentRelation relationParams = new SysCommentRelation();
+					relationParams.setFatherId(comment.getCommentId());
+					List<SysCommentRelation> commentsRelation = sysCommentRelationMapper.selectList(new QueryWrapper<SysCommentRelation>(relationParams));
+					
+					if (commentsRelation != null && !commentsRelation.isEmpty()) {
+						for (SysCommentRelation commentRelation : commentsRelation) {
+							sonCommentIdList.add(commentRelation.getId());
+							Map<String, Object> sonMap = new HashMap<String, Object>();
+							sonMap.put("id", commentRelation.getSonId());
+							sysSonCommentMapper.deleteByMap(sonMap);
+						}
+						sysCommentRelationMapper.deleteBatchIds(sonCommentIdList);
+					}
+					
+					SysFavorComment favorCommentParams = new SysFavorComment();
+					favorCommentParams.setCommentId(comment.getCommentId());
+					List<SysFavorComment> favorComments = sysFavorCommentMapper.selectList(new QueryWrapper<SysFavorComment>(favorCommentParams));
+					List<Long> favorCommentList = new ArrayList<Long>();
+					
+					if (favorComments != null && !favorComments.isEmpty()) {
+						for (SysFavorComment favorComment : favorComments) {
+							favorCommentList.add(favorComment.getId());
+						}
+						sysFavorCommentMapper.deleteBatchIds(favorCommentList);
+					}
+				}
+				sysKnowledgeCommentMapper.deleteBatchIds(commentIdList);
+			}
+			
+			List<Long> pictureIdList = new ArrayList<Long>();
+			SysKnowledgePicture knowledgeParams = new SysKnowledgePicture();
+			
+			knowledgeParams.setKnowledgeId(id);
+			List<SysKnowledgePicture> pictureList = sysKnowledgePictureMapper.selectList(new QueryWrapper<SysKnowledgePicture>(knowledgeParams));
+			
+			if (pictureList != null && !pictureList.isEmpty()) {
+				for (SysKnowledgePicture picture : pictureList) {
+					pictureIdList.add(picture.getId());
+					Long pictureId = picture.getPictureId();
+					
+					Map<String, Object> pictureMap = new HashMap<String, Object>();
+					
+					pictureMap.put("id", pictureId);
+					
+					sysPictureMapper.deleteByMap(pictureMap);
+				}
+				sysKnowledgePictureMapper.deleteBatchIds(pictureIdList);
+			}
+			result.success("删除成功，点击确定前往查看!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
