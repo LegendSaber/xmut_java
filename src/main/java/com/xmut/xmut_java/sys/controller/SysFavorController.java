@@ -20,6 +20,7 @@ import com.xmut.xmut_java.sys.entity.SysFavorExperience;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.mapper.SysExperienceMapper;
 import com.xmut.xmut_java.sys.mapper.SysFavorExperienceMapper;
+import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 
 @RestController
 @RequestMapping("/collect")
@@ -29,6 +30,9 @@ public class SysFavorController extends BaseController{
 	
 	@Autowired
 	private SysFavorExperienceMapper sysFavorExperienceMapper;
+	
+	@Autowired
+	private SysUserMapper sysUserMapper;
 	
 	@RequestMapping("/getExCollect")
 	public Result getExCollect(Long id, HttpServletRequest request) {
@@ -69,13 +73,18 @@ public class SysFavorController extends BaseController{
 			
 			if (isCollect == null)
 			{
+				sysFavorExperienceMapper.insert(params);
 				SysExperience exParams = new SysExperience();
 				exParams.setId(id);
 				SysExperience experience = sysExperienceMapper.selectOne(new QueryWrapper<SysExperience>(exParams));
 				experience.setFavorNum(experience.getFavorNum() + 1);
 				sysExperienceMapper.update(experience, new UpdateWrapper<SysExperience>().eq("id", id));
-				params.setModifyTime(new Date());
-				sysFavorExperienceMapper.insert(params);
+				
+				SysUser userParams = new SysUser();
+				userParams.setUsername(experience.getAuthor());
+				SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+				user.setScore(user.getScore() + 3);
+				sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
 			}
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -105,6 +114,13 @@ public class SysFavorController extends BaseController{
 				SysExperience experience = sysExperienceMapper.selectOne(new QueryWrapper<SysExperience>(exParams));
 				if (experience.getFavorNum() > 0) experience.setFavorNum(experience.getFavorNum() - 1);
 				sysExperienceMapper.update(experience, new UpdateWrapper<SysExperience>().eq("id", id));
+				
+				SysUser userParams = new SysUser();
+				userParams.setUsername(experience.getAuthor());
+				SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+				user.setScore(user.getScore() - 3);
+				sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
+				
 				Map<String, Object> columnMap = new HashMap<String, Object>();
 				
 				columnMap.put("user_id", userId);

@@ -68,15 +68,25 @@ public class SysFileController extends BaseController{
 		Result result = new Result();
 		SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
 		List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
+		Long userId = currentUser.getId();
+		SysUser userParams = new SysUser();
+		userParams.setId(userId);
+		SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+		
 		int len = files.size();
-	
-		for (int i = 0; i < len; i++) {
-			try {
-				MultipartFile file = files.get(i);
-				sysFileService.saveFile(file.getOriginalFilename(), file.getBytes(), currentUser);		
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			for (int i = 0; i < len; i++) {
+				if (user.getScore() < 5) {
+					result.fail("积分不足，文件上传失败!");
+				} else {
+					user.setScore(user.getScore() - 5);
+					sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
+					MultipartFile file = files.get(i);
+					sysFileService.saveFile(file.getOriginalFilename(), file.getBytes(), currentUser);	
+				}
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		return result;
@@ -181,6 +191,12 @@ public class SysFileController extends BaseController{
 			sysFileMapper.update(file, new UpdateWrapper<SysFile>().eq("id", id));
 			sysFavorFileMapper.insert(params);
 			
+			SysUser userParams = new SysUser();
+			userParams.setUsername(file.getAuthor());
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			user.setScore(user.getScore() + 3);
+			sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
+			
 			result.success("添加收藏成功!");
 		}
 		
@@ -204,6 +220,12 @@ public class SysFileController extends BaseController{
 			SysFile file = sysFileMapper.selectOne(new QueryWrapper<SysFile>(fileParams));
 			file.setFavorNum(file.getFavorNum() - 1);
 			sysFileMapper.update(file, new UpdateWrapper<SysFile>().eq("id", id));
+			
+			SysUser userParams = new SysUser();
+			userParams.setUsername(file.getAuthor());
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			user.setScore(user.getScore() - 3);
+			sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
 			result.success("已成功移除收藏夹!");
 		} catch (Exception e) {
 			e.printStackTrace();

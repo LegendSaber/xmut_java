@@ -31,6 +31,7 @@ import com.xmut.xmut_java.sys.mapper.SysExperienceCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysFavorCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysKnowledgeCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
+import com.xmut.xmut_java.sys.mapper.SysUserMapper;
 
 @RestController
 @RequestMapping("/sysComment")
@@ -52,6 +53,9 @@ public class SysCommentController extends BaseController{
 	
 	@Autowired
 	private SysKnowledgeCommentMapper sysKnowledgeCommentMapper;
+	
+	@Autowired
+	private SysUserMapper sysUserMapper;
 	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, Long id, int flag) {
@@ -113,22 +117,33 @@ public class SysCommentController extends BaseController{
 		
 		try {
 			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
-			SysComment params = new SysComment();
+			Long userId = currentUser.getId();
+			SysUser userParams = new SysUser();
+			userParams.setId(userId);
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
 			
-			params.setAuthor(currentUser.getUsername());
-			params.setContent(content);
-			params.setCreateTime(new Date());
-			params.setFavorNum((long) 0);
-			params.setSonComment(null);
-			
-			sysCommentMapper.insert(params);
-			Long commentId = params.getId();
-			SysExperienceComment params2 = new SysExperienceComment();
+			if (user.getScore() < 2) {
+				result.fail("积分不足，提交失败");
+			} else {
+				user.setScore(user.getScore() - 1);
+				sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
+				SysComment params = new SysComment();
 				
-			params2.setExperienceId(id);
-			params2.setCommentId(commentId);
-			sysExperienceCommentMapper.insert(params2);
-			result.success("评论成功，点击确定前往查看!");
+				params.setAuthor(currentUser.getUsername());
+				params.setContent(content);
+				params.setCreateTime(new Date());
+				params.setFavorNum((long) 0);
+				params.setSonComment(null);
+				
+				sysCommentMapper.insert(params);
+				Long commentId = params.getId();
+				SysExperienceComment params2 = new SysExperienceComment();
+					
+				params2.setExperienceId(id);
+				params2.setCommentId(commentId);
+				sysExperienceCommentMapper.insert(params2);
+				result.success("评论成功，点击确定前往查看!");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -156,6 +171,14 @@ public class SysCommentController extends BaseController{
 				
 				comment.setFavorNum(comment.getFavorNum() + 1);
 				sysCommentMapper.update(comment, new UpdateWrapper<SysComment>().eq("id", id));
+				
+				SysUser userParams = new SysUser();
+				
+				userParams.setUsername(comment.getAuthor());
+				
+				SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+				user.setScore(user.getScore() + 1);
+				sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
 				
 				SysFavorComment favor = new SysFavorComment();
 				favor.setCommentId(id);
@@ -202,20 +225,30 @@ public class SysCommentController extends BaseController{
 		
 		try {
 			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
-			SysComment commentParams = new SysComment();
-			SysKnowledgeComment params = new SysKnowledgeComment();
-			
-			commentParams.setAuthor(currentUser.getUsername());
-			commentParams.setContent(content);
-			commentParams.setCreateTime(new Date());
-			commentParams.setFavorNum((long)0);
-			
-			sysCommentMapper.insert(commentParams);
-			
-			params.setKnowledgeId(id);
-			params.setCommentId(commentParams.getId());
-			sysKnowledgeCommentMapper.insert(params);
-			result.success("评论成功,点击确定前往查看!");
+			Long userId = currentUser.getId();
+			SysUser userParams = new SysUser();
+			userParams.setId(userId);
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			if (user.getScore() < 2) {
+				result.fail("积分不足，评论失败");
+			} else {
+				user.setScore(user.getScore() - 2);
+				SysComment commentParams = new SysComment();
+				SysKnowledgeComment params = new SysKnowledgeComment();
+				
+				commentParams.setAuthor(currentUser.getUsername());
+				commentParams.setContent(content);
+				commentParams.setCreateTime(new Date());
+				commentParams.setFavorNum((long)0);
+				
+				sysCommentMapper.insert(commentParams);
+				
+				params.setKnowledgeId(id);
+				params.setCommentId(commentParams.getId());
+				sysKnowledgeCommentMapper.insert(params);
+				result.success("评论成功,点击确定前往查看!");
+			}
+				
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

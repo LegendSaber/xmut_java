@@ -86,26 +86,38 @@ public class SysKnowledgeController extends BaseController{
 		Result result = new Result();
 		
 		try {
-			Date currentDate = new Date();
 			SysUser currentUser = (SysUser) request.getSession().getAttribute("user");
-			SysKnowledge knowledgeParams = new SysKnowledge();
-			SysUserKnowledge userKnowlegeParams = new SysUserKnowledge();
+			Long userId = currentUser.getId();
+			SysUser userParams = new SysUser();
+			userParams.setId(userId);
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
 			
-			knowledgeParams.setAuthor(currentUser.getUsername());
-			knowledgeParams.setTitle(title);
-			knowledgeParams.setContent(content);
-			knowledgeParams.setCategory(category);
-			knowledgeParams.setFavorNum((long)0);
-			knowledgeParams.setCreateTime(currentDate);
-			knowledgeParams.setModifyTime(currentDate);
-			sysKnowledgeMapper.insert(knowledgeParams);
-			request.getSession().setAttribute("knowledge", knowledgeParams);
-			
-			userKnowlegeParams.setUserId(currentUser.getId());
-			userKnowlegeParams.setKnowledgeId(knowledgeParams.getId());
-			sysUserKnowledgeMapper.insert(userKnowlegeParams);
-			
-			result.setMessage("分享知识成功，点击确定查看");
+			if (user.getScore() < 5) {
+				result.fail("积分不足，提交失败!");
+			} else {
+				user.setScore(user.getScore() - 5);
+				sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
+				Date currentDate = new Date();
+				
+				SysKnowledge knowledgeParams = new SysKnowledge();
+				SysUserKnowledge userKnowlegeParams = new SysUserKnowledge();
+				
+				knowledgeParams.setAuthor(currentUser.getUsername());
+				knowledgeParams.setTitle(title);
+				knowledgeParams.setContent(content);
+				knowledgeParams.setCategory(category);
+				knowledgeParams.setFavorNum((long)0);
+				knowledgeParams.setCreateTime(currentDate);
+				knowledgeParams.setModifyTime(currentDate);
+				sysKnowledgeMapper.insert(knowledgeParams);
+				request.getSession().setAttribute("knowledge", knowledgeParams);
+				
+				userKnowlegeParams.setUserId(currentUser.getId());
+				userKnowlegeParams.setKnowledgeId(knowledgeParams.getId());
+				sysUserKnowledgeMapper.insert(userKnowlegeParams);
+				
+				result.setMessage("分享知识成功，点击确定查看");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -224,6 +236,7 @@ public class SysKnowledgeController extends BaseController{
 				}
 			}
 		}
+		request.getSession().removeAttribute("knowledge");
 	
 		return result;
 	}
@@ -297,6 +310,12 @@ public class SysKnowledgeController extends BaseController{
 			knowledge = sysKnowledgeMapper.selectOne(new QueryWrapper<SysKnowledge>(knowledeParams));
 			knowledge.setFavorNum(knowledge.getFavorNum() + 1);
 			sysKnowledgeMapper.update(knowledge, new UpdateWrapper<SysKnowledge>().eq("id", id));
+		
+			SysUser userParams = new SysUser();
+			userParams.setUsername(knowledge.getAuthor());
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			user.setScore(user.getScore() + 3);
+			sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -322,6 +341,12 @@ public class SysKnowledgeController extends BaseController{
 			knowledge = sysKnowledgeMapper.selectOne(new QueryWrapper<SysKnowledge>(knowledeParams));
 			knowledge.setFavorNum(knowledge.getFavorNum() - 1);
 			sysKnowledgeMapper.update(knowledge, new UpdateWrapper<SysKnowledge>().eq("id", id));
+		
+			SysUser userParams = new SysUser();
+			userParams.setUsername(knowledge.getAuthor());
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			user.setScore(user.getScore() - 3);
+			sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -487,7 +512,7 @@ public class SysKnowledgeController extends BaseController{
 			if (knowledge != null) {
 				result.setData(knowledge);
 			}else {
-				result.fail("这边文章已经被删除!");
+				result.fail("这篇文章已经被删除!");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

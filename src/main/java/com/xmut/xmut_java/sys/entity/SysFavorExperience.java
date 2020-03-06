@@ -11,7 +11,6 @@ public class SysFavorExperience extends BaseEntity{
 	private Long id;
 	private Long userId;
 	private Long experienceId;
-	private Date modifyTime;
 	
 	public Long getId() {
 		return id;
@@ -30,11 +29,5 @@ public class SysFavorExperience extends BaseEntity{
 	}
 	public void setExperienceId(Long experienceId) {
 		this.experienceId = experienceId;
-	}
-	public Date getModifyTime() {
-		return modifyTime;
-	}
-	public void setModifyTime(Date modifyTime) {
-		this.modifyTime = modifyTime;
 	}
 }	

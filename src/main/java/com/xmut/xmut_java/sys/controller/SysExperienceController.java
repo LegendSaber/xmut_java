@@ -156,28 +156,27 @@ public class SysExperienceController extends BaseController{
 		SysUserExperience params = new SysUserExperience();
 		
 		try {
-			experienceParams.setAuthor(currentUser.getUsername());
-			experienceParams.setTitle(title);
-			experienceParams.setContent(content);
-			SysExperience experience = sysExperienceMapper.selectOne(new QueryWrapper<SysExperience>(experienceParams));
-			
-			if (experience != null) {
-				result.fail("已有相同标题和内容的文章被发表");
-			}else {
+			SysUser userParams = new SysUser();
+			userParams.setId(userId);
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			if (user.getScore() < 3) {
+				result.fail("积分不足，提交失败");
+				return result;
+			}
+			else {
+				user.setScore(user.getScore() - 3);
+				sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
+				experienceParams.setAuthor(currentUser.getUsername());
+				experienceParams.setTitle(title);
+				experienceParams.setContent(content);
 				experienceParams.setFavorNum((long)0);
 				experienceParams.setCreateTime(currentDate);
 				experienceParams.setModifyTime(currentDate);
 				sysExperienceMapper.insert(experienceParams);
-				
-				SysExperience getParams = new SysExperience();
-				getParams.setTitle(title);
-				getParams.setContent(content);
-				SysExperience hasexperience = sysExperienceMapper.selectOne(new QueryWrapper<SysExperience>(getParams));
-				if (hasexperience != null) {	
-					params.setUserId(userId);
-					params.setExperienceId(hasexperience.getId());
-					sysUserExperienceMapper.insert(params);
-				}
+					
+				params.setUserId(userId);
+				params.setExperienceId(experienceParams.getId());
+				sysUserExperienceMapper.insert(params);
 				result.setMessage("提交成功,请前往查看");
 			}
 		}catch(Exception e) {
