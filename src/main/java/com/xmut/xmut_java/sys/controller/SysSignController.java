@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
 import com.xmut.xmut_java.sys.entity.SysSign;
@@ -106,7 +109,7 @@ public class SysSignController extends BaseController{
 			
 			signParams2.setCreateTime(new Date());
 			signParams2.setUsername(user.getUsername());
-			sysSignMapper.insert(signParams);
+			sysSignMapper.insert(signParams2);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -144,6 +147,37 @@ public class SysSignController extends BaseController{
 				list.add(map);
 			}
 			result.setData(list);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getMySign")
+	public Result getMySign(int currentPage, int pageSize, HttpServletRequest request) {
+		Result result = new Result();
+		
+		try {
+			Page<SysSign> page = new Page<SysSign>(currentPage, pageSize);
+			SysSign params = new SysSign();
+			QueryWrapper<SysSign> wrapper = new QueryWrapper<SysSign>(params);
+			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+			SysSign queryParams = new SysSign();
+			
+			Set<Long> idSet = new HashSet<Long>();
+			queryParams.setUsername(currentUser.getUsername());
+			List<SysSign> signList = sysSignMapper.selectList(new QueryWrapper<SysSign>(queryParams));
+			
+			if (signList != null && !signList.isEmpty()) {
+				for (SysSign sign : signList) {
+					idSet.add(sign.getId());
+				}
+			}
+			
+			wrapper.in("id", idSet);
+			wrapper.orderByDesc("create_time");
+			result.setData(sysSignMapper.selectPage(page, wrapper));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

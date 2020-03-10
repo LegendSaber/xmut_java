@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
@@ -126,7 +127,7 @@ public class SysKnowledgeController extends BaseController{
 	}
 	
 	@RequestMapping("/getAll")
-	public Result getAll(int currentPage, int pageSize, String category, int flag) {
+	public Result getAll(int currentPage, int pageSize, String category, int flag, HttpServletRequest request) {
 		Result result = new Result();
 		
 		try {
@@ -148,6 +149,7 @@ public class SysKnowledgeController extends BaseController{
 			wrapper.in("id", idList);
 			if (flag == 1) wrapper.orderByDesc("modify_time");
 			else wrapper.orderByDesc("favor_num");
+			wrapper.eq("category", category);
 			
 			result.setData(sysKnowledgeMapper.selectPage(page, wrapper));
 		} catch (Exception e) {
@@ -158,7 +160,7 @@ public class SysKnowledgeController extends BaseController{
 	}
 	
 	@RequestMapping("/getFavorKnowledge")
-	public Result getFavorKnowledge(int currentPage, int pageSize, String category, HttpServletRequest request) {
+	public Result getFavorKnowledge(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();
 		
 		try {
@@ -177,7 +179,7 @@ public class SysKnowledgeController extends BaseController{
 				}
 			}
 			wrapper.in("id", idList);
-			wrapper.eq("category", category);
+			if (!query.equals("")) wrapper.like("title", query);
 			wrapper.orderByDesc("modify_time");
 			
 			result.setData(sysKnowledgeMapper.selectPage(page, wrapper));
@@ -189,7 +191,7 @@ public class SysKnowledgeController extends BaseController{
 	}
 	
 	@RequestMapping("/getMyKnowledge")
-	public Result getMyKnowledge(int currentPage, int pageSize, String category, HttpServletRequest request ) {
+	public Result getMyKnowledge(int currentPage, int pageSize, String query, HttpServletRequest request ) {
 		Result result = new Result();
 		
 		try {
@@ -209,7 +211,7 @@ public class SysKnowledgeController extends BaseController{
 			}
 			
 			wrapper.in("id", idList);
-			wrapper.eq("category", category);
+			if (!query.equals("")) wrapper.like("title", query);
 			wrapper.orderByDesc("modify_time");
 			result.setData(sysKnowledgeMapper.selectPage(page, wrapper));
 		} catch (Exception e) {
@@ -316,6 +318,7 @@ public class SysKnowledgeController extends BaseController{
 			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
 			user.setScore(user.getScore() + 3);
 			sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
+			result.setMessage("收藏成功!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -111,7 +111,7 @@ public class SysFileController extends BaseController{
 	}
 	
 	@RequestMapping("/getMyCollect")
-	public Result getMyCollect(int currentPage, int pageSize, HttpServletRequest request) {
+	public Result getMyCollect(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();
 		try {
 			Page<SysFile> page = new Page<SysFile>(currentPage, pageSize);
@@ -133,6 +133,7 @@ public class SysFileController extends BaseController{
 			
 			wrapper.in("id", fileSet);
 			wrapper.orderByDesc("create_time");
+			if (!query.equals("")) wrapper.like("file_name", query);
 			result.setData(sysFileMapper.selectPage(page, wrapper));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -142,7 +143,7 @@ public class SysFileController extends BaseController{
 	}
 	
 	@RequestMapping("/getMyFile")
-	public Result getMyFile(int currentPage, int pageSize, HttpServletRequest request) {
+	public Result getMyFile(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();
 		
 		try {
@@ -164,6 +165,7 @@ public class SysFileController extends BaseController{
 			
 			wrapper.in("id", fileSet);
 			wrapper.orderByDesc("create_time");
+			if (!query.equals("")) wrapper.like("file_name", query);
 			result.setData(sysFileMapper.selectPage(page, wrapper));
 		} catch (Exception e) {
 			e.printStackTrace();

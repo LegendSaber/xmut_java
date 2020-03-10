@@ -86,7 +86,7 @@ public class SysExperienceController extends BaseController{
 	}
 	
 	@RequestMapping("/getMyExperience")
-	public Result getMyExperience(int currentPage, int pageSize, HttpServletRequest request) {
+	public Result getMyExperience(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();
 		try {
 			Page<SysExperience> page = new Page<SysExperience>(currentPage, pageSize);
@@ -106,6 +106,7 @@ public class SysExperienceController extends BaseController{
 			}
 			warpper.in("id", experienceidSet);
 			warpper.orderByDesc("modify_time");
+			if (!query.equals("")) warpper.like("title", query);
 			result.setData(sysExperienceMapper.selectPage(page, warpper));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -115,7 +116,7 @@ public class SysExperienceController extends BaseController{
 	}
 	
 	@RequestMapping("/getFavorExperience")
-	public Result getFavorExperience(int currentPage, int pageSize, HttpServletRequest request) {
+	public Result getFavorExperience(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();
 		
 		try {
@@ -138,6 +139,7 @@ public class SysExperienceController extends BaseController{
 			
 			warpper.in("id", experienceidSet);
 			warpper.orderByDesc("modify_time");
+			if (!query.equals("")) warpper.like("title", query);
 			result.setData(sysExperienceMapper.selectPage(page, warpper));
 		} catch (Exception e) {
 			e.printStackTrace();

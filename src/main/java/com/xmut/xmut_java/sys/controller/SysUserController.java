@@ -161,4 +161,24 @@ public class SysUserController extends BaseController{
 		
 		return result;
 	}
+	
+	@RequestMapping("/getUserById")
+	public Result getUserById(Long id, HttpServletRequest request) {
+		Result result = new Result();
+		
+		try {
+			SysUser params = new SysUser();
+			params.setId(id);
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(params));
+			
+			if (user != null) {
+				request.getSession().setAttribute("user", user);
+				result.setData(user);
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
 }
