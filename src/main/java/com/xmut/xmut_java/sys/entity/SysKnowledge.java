@@ -16,6 +16,7 @@ public class SysKnowledge extends BaseEntity{
 	private Date modifyTime;
 	private Long favorNum;
 	private String category;
+	private String img;
 	
 	public Long getId() {
 		return id;
@@ -64,5 +65,11 @@ public class SysKnowledge extends BaseEntity{
 	}
 	public void setCategory(String category) {
 		this.category = category;
+	}
+	public String getImg() {
+		return img;
+	}
+	public void setImg(String img) {
+		this.img = img;
 	}
 }

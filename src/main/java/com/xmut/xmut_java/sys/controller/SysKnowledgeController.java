@@ -10,6 +10,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -151,7 +152,25 @@ public class SysKnowledgeController extends BaseController{
 			else wrapper.orderByDesc("favor_num");
 			wrapper.eq("category", category);
 			
-			result.setData(sysKnowledgeMapper.selectPage(page, wrapper));
+			IPage p = sysKnowledgeMapper.selectPage(page, wrapper);
+			if (p != null) {
+				List<SysKnowledge> last = new ArrayList<SysKnowledge>();
+				List<SysKnowledge> knowledges = p.getRecords();
+				for (SysKnowledge knowledge2 : knowledges) {
+					SysUser userParams = new SysUser();
+					userParams.setUsername(knowledge2.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						knowledge2.setImg(img);
+					}
+					last.add(knowledge2);
+				}
+				p.setRecords(last);
+				result.setData(p);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

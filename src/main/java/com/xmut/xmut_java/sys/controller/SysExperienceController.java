@@ -10,12 +10,14 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
@@ -24,7 +26,6 @@ import com.xmut.xmut_java.sys.entity.SysExperience;
 import com.xmut.xmut_java.sys.entity.SysExperienceComment;
 import com.xmut.xmut_java.sys.entity.SysFavorComment;
 import com.xmut.xmut_java.sys.entity.SysFavorExperience;
-import com.xmut.xmut_java.sys.entity.SysSonComment;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.entity.SysUserExperience;
 import com.xmut.xmut_java.sys.mapper.SysCommentMapper;
@@ -36,6 +37,7 @@ import com.xmut.xmut_java.sys.mapper.SysFavorExperienceMapper;
 import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserExperienceMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserMapper;
+import com.xmut.xmut_java.sys.service.SysFileService;
 
 @RestController
 @RequestMapping("/sysExperience")
@@ -67,6 +69,9 @@ public class SysExperienceController extends BaseController{
 	@Autowired
 	private SysUserMapper sysUserMapper;
 	
+	@Autowired
+	private SysFileService sysFileService;
+	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, int flag) {
 		Result result = new Result();
@@ -77,7 +82,25 @@ public class SysExperienceController extends BaseController{
 			
 			if (flag == 1) warpper.orderByDesc("modify_time");
 			else if (flag == 2) warpper.orderByDesc("favor_num"); 
-			result.setData(sysExperienceMapper.selectPage(page, warpper));
+			IPage p = sysExperienceMapper.selectPage(page, warpper);
+			if (p != null) {
+				List<SysExperience> last = new ArrayList<SysExperience>();
+				List<SysExperience> experiences = p.getRecords();
+				for (SysExperience experiences2 : experiences) {
+					SysUser userParams = new SysUser();
+					userParams.setUsername(experiences2.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						experiences2.setImg(img);
+					}
+					last.add(experiences2);
+				}
+				p.setRecords(last);
+				result.setData(p);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

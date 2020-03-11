@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,7 @@ import com.xmut.xmut_java.sys.mapper.SysFavorCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysKnowledgeCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysSonCommentMapper;
 import com.xmut.xmut_java.sys.mapper.SysUserMapper;
+import com.xmut.xmut_java.sys.service.SysFileService;
 
 @RestController
 @RequestMapping("/sysComment")
@@ -56,6 +58,9 @@ public class SysCommentController extends BaseController{
 	
 	@Autowired
 	private SysUserMapper sysUserMapper;
+	
+	@Autowired
+	private SysFileService sysFileService;
 	
 	@RequestMapping("/getAll")
 	public Result getAll(int currentPage, int pageSize, Long id, int flag) {
@@ -99,6 +104,17 @@ public class SysCommentController extends BaseController{
 						sonCommentList.add(addSon);
 					}
 					c.setSonComment(sonCommentList);
+					
+					SysUser userParams = new SysUser();
+					userParams.setUsername(c.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						c.setImg(img);
+					}
+					
 					last.add(c);
 				}
 				p.setRecords(last);
@@ -299,6 +315,17 @@ public class SysCommentController extends BaseController{
 						sonCommentList.add(addSon);
 					}
 					c.setSonComment(sonCommentList);
+					
+					SysUser userParams = new SysUser();
+					userParams.setUsername(c.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						c.setImg(img);
+					}
+					
 					last.add(c);
 				}
 				p.setRecords(last);

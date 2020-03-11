@@ -17,6 +17,7 @@ public class SysComment extends BaseEntity{
 	private Date createTime;
 	private Long favorNum;
 	private List<SysSonComment> sonComment;
+	private String img;
 	
 	public Long getId() {
 		return id;
@@ -53,5 +54,11 @@ public class SysComment extends BaseEntity{
 	}
 	public void setSonComment(List<SysSonComment> sonComment) {
 		this.sonComment = sonComment;
+	}
+	public String getImg() {
+		return img;
+	}
+	public void setImg(String img) {
+		this.img = img;
 	}
 }

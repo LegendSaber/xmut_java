@@ -15,6 +15,7 @@ public class SysExperience extends BaseEntity{
 	private Date createTime;
 	private Date modifyTime;
 	private Long favorNum;
+	private String img;
 	
 	public Long getId() {
 		return id;
@@ -57,5 +58,11 @@ public class SysExperience extends BaseEntity{
 	}
 	public void setFavorNum(Long favorNum) {
 		this.favorNum = favorNum;
+	}
+	public String getImg() {
+		return img;
+	}
+	public void setImg(String img) {
+		this.img = img;
 	}
 }

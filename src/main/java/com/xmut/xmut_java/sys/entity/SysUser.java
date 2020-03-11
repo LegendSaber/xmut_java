@@ -13,6 +13,7 @@ public class SysUser extends BaseEntity{
 	private Long score;
 	private Long signDay;
 	private Long isUsed;
+	private Long picNo;
 	
 	public Long getId() {
 		return id;
@@ -55,5 +56,11 @@ public class SysUser extends BaseEntity{
 	}
 	public void setIsUsed(Long isUsed) {
 		this.isUsed = isUsed;
+	}
+	public Long getPicNo() {
+		return picNo;
+	}
+	public void setPicNo(Long picNo) {
+		this.picNo = picNo;
 	}
 }
