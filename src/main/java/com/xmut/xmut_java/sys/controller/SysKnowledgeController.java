@@ -522,6 +522,7 @@ public class SysKnowledgeController extends BaseController{
 			knowledge.setModifyTime(new Date());
 			
 			sysKnowledgeMapper.update(knowledge, new UpdateWrapper<SysKnowledge>().eq("id", id));
+			request.getSession().setAttribute("knowledge", knowledge);
 			result.success("修改文章成功，点击确定前往查看!");
 		} catch(Exception e) {
 			e.printStackTrace();
