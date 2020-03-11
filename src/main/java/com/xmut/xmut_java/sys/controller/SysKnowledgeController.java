@@ -178,6 +178,37 @@ public class SysKnowledgeController extends BaseController{
 		return result;
 	}
 	
+	@RequestMapping("/getSearchKnowledge")
+	public Result getSearchKnowledge(String value) {
+		Result result = new Result();
+		
+		try {
+			List<SysKnowledge> list = new ArrayList<SysKnowledge>();
+			List<SysKnowledge> knowledgeList = sysKnowledgeMapper.selectList(new QueryWrapper<SysKnowledge>().like("title", value));
+		
+			if (knowledgeList != null && !knowledgeList.isEmpty()) {
+				for (SysKnowledge knowledge : knowledgeList) {
+					SysUser userParams = new SysUser();
+					userParams.setUsername(knowledge.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						knowledge.setImg(img);
+					}
+					list.add(knowledge);
+				}
+			}		
+			
+			result.setData(list);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
 	@RequestMapping("/getFavorKnowledge")
 	public Result getFavorKnowledge(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();

@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
@@ -102,8 +103,57 @@ public class SysFileController extends BaseController{
 			
 			if (flag == 1) wrapper.orderByDesc("create_time");
 			else wrapper.orderByDesc("favor_num");
-			result.setData(sysFileMapper.selectPage(page, wrapper));
+			IPage p = sysFileMapper.selectPage(page, wrapper);
+			if (p != null) {
+				List<SysFile> last = new ArrayList<SysFile>();
+				List<SysFile> files = p.getRecords();
+				for (SysFile file2 : files) {
+					SysUser userParams = new SysUser();
+					userParams.setUsername(file2.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						file2.setImg(img);
+					}
+					last.add(file2);
+				}
+				p.setRecords(last);
+				result.setData(p);
+			}
 		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
+	@RequestMapping("/getSearchFile")
+	public Result getSearchFile(String value) {
+		Result result = new Result();
+		
+		try {
+			List<SysFile> list = new ArrayList<SysFile>();
+			List<SysFile> fileList = sysFileMapper.selectList(new QueryWrapper<SysFile>().like("file_name", value));
+		
+			if (fileList != null && !fileList.isEmpty()) {
+				for (SysFile file : fileList) {
+					SysUser userParams = new SysUser();
+					userParams.setUsername(file.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						file.setImg(img);
+					}
+					list.add(file);
+				}
+			}		
+			
+			result.setData(list);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		

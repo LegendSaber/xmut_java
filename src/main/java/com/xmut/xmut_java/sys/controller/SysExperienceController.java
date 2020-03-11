@@ -108,6 +108,37 @@ public class SysExperienceController extends BaseController{
 		return result;
 	}
 	
+	@RequestMapping("/getSearchExperience")
+	public Result getSearchExperience(String value) {
+		Result result = new Result();
+		
+		try {
+			List<SysExperience> list = new ArrayList<SysExperience>();
+			List<SysExperience> experienceList = sysExperienceMapper.selectList(new QueryWrapper<SysExperience>().like("title", value));
+			
+			if (experienceList != null && !experienceList.isEmpty()) {
+				for (SysExperience experience : experienceList) {
+					SysUser userParams = new SysUser();
+					userParams.setUsername(experience.getAuthor());
+					SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+					Long avatarId = user.getPicNo();
+					if (avatarId != -1) {
+						byte[] data = sysFileService.getAvatar(avatarId);
+						String img = "data:image/jpeg;base64," + Base64.encodeBase64String(data);
+						experience.setImg(img);
+					}
+					list.add(experience);
+				}
+			}		
+			
+			result.setData(list);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
 	@RequestMapping("/getMyExperience")
 	public Result getMyExperience(int currentPage, int pageSize, String query, HttpServletRequest request) {
 		Result result = new Result();

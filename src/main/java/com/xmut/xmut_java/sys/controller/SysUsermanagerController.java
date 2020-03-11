@@ -115,7 +115,7 @@ public class SysUsermanagerController extends BaseController{
 			
 			for (int i = 0; i < len; i++) {
 				MultipartFile file = files.get(i);
-				Long avatarId = sysFileService.saveAvatar(file.getName(), file.getBytes(), user.getPicNo());
+				Long avatarId = sysFileService.saveAvatar(file.getOriginalFilename(), file.getBytes(), user.getPicNo());
 				if (avatarId != user.getPicNo()) {
 					user.setPicNo(avatarId);
 					sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));

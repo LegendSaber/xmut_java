@@ -14,6 +14,7 @@ public class SysFile extends BaseEntity{
 	private byte[] fileContent;
 	private Long favorNum;
 	private Date createTime;
+	private String img;
 	
 	public Long getId() {
 		return id;
@@ -50,5 +51,11 @@ public class SysFile extends BaseEntity{
 	}
 	public void setCreateTime(Date createTime) {
 		this.createTime = createTime;
+	}
+	public String getImg() {
+		return img;
+	}
+	public void setImg(String img) {
+		this.img = img;
 	}
 }
