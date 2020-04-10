@@ -59,7 +59,7 @@ public class SysAdminComtroller extends BaseController{
 			params.setPassword(password);
 			
 			SysAdmin admin = sysAdminMapper.selectOne(new QueryWrapper<SysAdmin>(params));
-			
+		
 			if (admin == null) {
 				result.fail("用户名或密码错误");
 			} else if (admin.getIsUsed() == 0) {

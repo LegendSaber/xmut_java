@@ -105,6 +105,7 @@ public class SysUsermanagerController extends BaseController{
 		Result result = new Result();
 		
 		try {
+			String[] canUpload = {".jpg", ".png", ".jpeg"};
 			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
 			List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
 			Long userId = currentUser.getId();
@@ -115,11 +116,24 @@ public class SysUsermanagerController extends BaseController{
 			
 			for (int i = 0; i < len; i++) {
 				MultipartFile file = files.get(i);
-				Long avatarId = sysFileService.saveAvatar(file.getOriginalFilename(), file.getBytes(), user.getPicNo());
-				if (avatarId != user.getPicNo()) {
-					user.setPicNo(avatarId);
-					sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
-					request.getSession().setAttribute("user", user);
+				String fileName = file.getOriginalFilename();
+				int index = fileName.lastIndexOf('.');
+				String suffix = fileName.substring(index);
+				boolean isOk = false;
+				
+				for (String temp : canUpload) {
+					if (temp.equals(suffix)) {
+						isOk = true;
+					}
+				}
+				
+				if (isOk) {
+					Long avatarId = sysFileService.saveAvatar(fileName, file.getBytes(), user.getPicNo());
+					if (avatarId != user.getPicNo()) {
+						user.setPicNo(avatarId);
+						sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
+						request.getSession().setAttribute("user", user);
+					}
 				}
 				result.setData(user);
 			}

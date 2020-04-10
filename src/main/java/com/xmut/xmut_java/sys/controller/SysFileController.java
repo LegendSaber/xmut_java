@@ -77,13 +77,20 @@ public class SysFileController extends BaseController{
 		int len = files.size();
 		try {
 			for (int i = 0; i < len; i++) {
-				if (user.getScore() < 5) {
+				MultipartFile file = files.get(i);
+				String fileName = file.getOriginalFilename();
+				int index = fileName.lastIndexOf('.');
+				String suffix = fileName.substring(index);
+				
+				if (!suffix.equals(".zip")) {
+					result.fail("只能上传.zip文件");
+				}
+				else if (user.getScore() < 5) {
 					result.fail("积分不足，文件上传失败!");
 				} else {
 					user.setScore(user.getScore() - 5);
 					sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
-					MultipartFile file = files.get(i);
-					sysFileService.saveFile(file.getOriginalFilename(), file.getBytes(), currentUser);	
+					sysFileService.saveFile(fileName, file.getBytes(), currentUser);	
 				}
 			}
 		} catch (IOException e) {

@@ -89,10 +89,10 @@ public class SysSignController extends BaseController{
 			String tmpDate = year + "-" + month + "-" + day;
 			Date date = new Date();
 			date = ft.parse(tmpDate);
-			
 			SysSign signParams = new SysSign();
 			
 			signParams.setCreateTime(date);
+			signParams.setUsername(user.getUsername());
 			
 			if (sysSignMapper.selectOne(new QueryWrapper<SysSign>(signParams)) != null) user.setSignDay((long)user.getSignDay() + 1);
 			else user.setSignDay((long)1);
