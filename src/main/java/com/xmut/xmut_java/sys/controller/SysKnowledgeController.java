@@ -274,34 +274,39 @@ public class SysKnowledgeController extends BaseController{
 	@RequestMapping("/upload")
 	public Result upload(HttpServletRequest request) {
 		Result result = new Result();
-		String[] canUpload = {".jpg", ".png", ".jpeg"};
-		SysKnowledge knowledge = (SysKnowledge)request.getSession().getAttribute("knowledge");
-		List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
-		int len = files.size();
-	
-		for (int i = 0; i < len; i++) {		
-			MultipartFile file = files.get(i);
-			
-			if (file != null){
-				try {
-					String fileName = file.getOriginalFilename();
-					int index = fileName.lastIndexOf('.');
-					String suffix = fileName.substring(index);
-					boolean isOk = false;
-					
-					for (String temp : canUpload) {
-						if (temp.equalsIgnoreCase(suffix)) {
-							isOk = true;
+		String token = request.getParameter("token");
+		String rightToken = (String)request.getSession().getAttribute("token");
+		
+		if (rightToken.equals(token)) {
+			String[] canUpload = {".jpg", ".png", ".jpeg"};
+			SysKnowledge knowledge = (SysKnowledge)request.getSession().getAttribute("knowledge");
+			List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
+			int len = files.size();
+		
+			for (int i = 0; i < len; i++) {		
+				MultipartFile file = files.get(i);
+				
+				if (file != null){
+					try {
+						String fileName = file.getOriginalFilename();
+						int index = fileName.lastIndexOf('.');
+						String suffix = fileName.substring(index);
+						boolean isOk = false;
+						
+						for (String temp : canUpload) {
+							if (temp.equalsIgnoreCase(suffix)) {
+								isOk = true;
+							}
 						}
+						
+						if (isOk) sysFileService.savePicture(fileName, file.getBytes(), knowledge.getId());		
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					
-					if (isOk) sysFileService.savePicture(fileName, file.getBytes(), knowledge.getId());		
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
 			}
+			request.getSession().removeAttribute("knowledge");
 		}
-		request.getSession().removeAttribute("knowledge");
 	
 		return result;
 	}

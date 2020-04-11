@@ -32,6 +32,29 @@ public class RequestIntercept implements HandlerInterceptor{
         @SuppressWarnings("unused")
 		String requestURI = request.getRequestURI();
         
+        if (needTest(requestURI)) {
+        	String rightToken = (String)request.getSession().getAttribute("token");
+            String token = request.getHeader("token");
+            
+            if (rightToken != null) {
+            	if (!rightToken.equals(token)) return false;
+            } 
+        }
+        
+    	return true;
+    }
+    
+    public boolean needTest(String requestURI) {
+    	if (requestURI.equals("/xmut/sysUser/login")) return false; 
+		
+		if (requestURI.equals("/xmut/sysFile/download")) return false;
+		
+		if (requestURI.equals("/xmut/sysUsermanager/saveAvatar")) return false;
+		
+		if (requestURI.equals("/xmut/sysKnowledge/upload")) return false;
+		
+		if (requestURI.equals("/xmut/sysFile/upload")) return false;
+    	
     	return true;
     }
 }

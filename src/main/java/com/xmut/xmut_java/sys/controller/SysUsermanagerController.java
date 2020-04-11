@@ -103,42 +103,46 @@ public class SysUsermanagerController extends BaseController{
 	@RequestMapping("/saveAvatar")
 	public Result savaAvatar(HttpServletRequest request) {
 		Result result = new Result();
+		String token = request.getParameter("token");
+		String rightToken = (String)request.getSession().getAttribute("token");
 		
-		try {
-			String[] canUpload = {".jpg", ".png", ".jpeg"};
-			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
-			List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
-			Long userId = currentUser.getId();
-			SysUser userParams = new SysUser();
-			userParams.setId(userId);
-			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
-			int len = files.size();
-			
-			for (int i = 0; i < len; i++) {
-				MultipartFile file = files.get(i);
-				String fileName = file.getOriginalFilename();
-				int index = fileName.lastIndexOf('.');
-				String suffix = fileName.substring(index);
-				boolean isOk = false;
+		if (token.equals(rightToken)) {
+			try {
+				String[] canUpload = {".jpg", ".png", ".jpeg"};
+				SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+				List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
+				Long userId = currentUser.getId();
+				SysUser userParams = new SysUser();
+				userParams.setId(userId);
+				SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+				int len = files.size();
 				
-				for (String temp : canUpload) {
-					if (temp.equals(suffix)) {
-						isOk = true;
+				for (int i = 0; i < len; i++) {
+					MultipartFile file = files.get(i);
+					String fileName = file.getOriginalFilename();
+					int index = fileName.lastIndexOf('.');
+					String suffix = fileName.substring(index);
+					boolean isOk = false;
+					
+					for (String temp : canUpload) {
+						if (temp.equalsIgnoreCase(suffix)) {
+							isOk = true;
+						}
 					}
-				}
-				
-				if (isOk) {
-					Long avatarId = sysFileService.saveAvatar(fileName, file.getBytes(), user.getPicNo());
-					if (avatarId != user.getPicNo()) {
-						user.setPicNo(avatarId);
-						sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
-						request.getSession().setAttribute("user", user);
+					
+					if (isOk) {
+						Long avatarId = sysFileService.saveAvatar(fileName, file.getBytes(), user.getPicNo());
+						if (avatarId != user.getPicNo()) {
+							user.setPicNo(avatarId);
+							sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", userId));
+							request.getSession().setAttribute("user", user);
+						}
 					}
+					result.setData(user);
 				}
-				result.setData(user);
+			} catch(Exception e) {
+				e.printStackTrace();
 			}
-		} catch(Exception e) {
-			e.printStackTrace();
 		}
 		
 		return result;

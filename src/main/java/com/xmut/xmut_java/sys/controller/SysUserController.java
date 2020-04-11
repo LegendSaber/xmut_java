@@ -1,5 +1,7 @@
 package com.xmut.xmut_java.sys.controller;
 
+import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +15,16 @@ import com.xmut.xmut_java.common.BaseController;
 import com.xmut.xmut_java.common.Result;
 import com.xmut.xmut_java.sys.entity.SysUser;
 import com.xmut.xmut_java.sys.mapper.SysUserMapper;
+import com.xmut.xmut_java.sys.service.SysSecurityService;
 
 @RestController
 @RequestMapping("/sysUser")
 public class SysUserController extends BaseController{
 	@Autowired
 	private SysUserMapper sysUserMapper;
+	
+	@Autowired
+	private SysSecurityService sysSecurityService;
 	
 	@RequestMapping("/register")
 	public Result register(String username, String password, String roleName) {
@@ -59,9 +65,14 @@ public class SysUserController extends BaseController{
 		}else if (user.getIsUsed() == 0){
 			result.fail("账户已被停用，请联系管理员!");
 		}else {
+			HashMap<String, Object> map = new HashMap<String, Object>();
+			String token = sysSecurityService.generateToken();
 			result.success("登录成功");
-			result.setData(user);
+			map.put("user", user);
+			map.put("token", token);
+			result.setData(map);
 			request.getSession().setAttribute("user", user);
+			request.getSession().setAttribute("token", token);
 		}
 		
 		return result;
@@ -73,6 +84,9 @@ public class SysUserController extends BaseController{
 
 		if (request.getSession().getAttribute("user") != null) {
 			request.getSession().removeAttribute("user");
+		}
+		if (request.getSession().getAttribute("token") != null) {
+			request.getSession().removeAttribute("token");
 		}
 		result.success("退出登录成功");
 		
@@ -99,6 +113,7 @@ public class SysUserController extends BaseController{
 			sysUserMapper.update(currentUser, new UpdateWrapper<SysUser>().eq("id", id));
 			result.success("修改密码成功,请重新登录!");
 			request.getSession().removeAttribute("user");
+			request.getSession().removeAttribute("token");
 		}
 		
 		return result;

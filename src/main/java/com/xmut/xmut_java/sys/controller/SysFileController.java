@@ -67,34 +67,41 @@ public class SysFileController extends BaseController{
 	@RequestMapping("/upload")
 	public Result upload(HttpServletRequest request) {
 		Result result = new Result();
-		SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
-		List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
-		Long userId = currentUser.getId();
-		SysUser userParams = new SysUser();
-		userParams.setId(userId);
-		SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+		String token = request.getParameter("token");
+		String rightToken = (String)request.getSession().getAttribute("token");
 		
-		int len = files.size();
-		try {
-			for (int i = 0; i < len; i++) {
-				MultipartFile file = files.get(i);
-				String fileName = file.getOriginalFilename();
-				int index = fileName.lastIndexOf('.');
-				String suffix = fileName.substring(index);
-				
-				if (!suffix.equals(".zip")) {
-					result.fail("只能上传.zip文件");
+		if (token.equals(rightToken)) {
+			SysUser currentUser = (SysUser)request.getSession().getAttribute("user");
+			List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
+			Long userId = currentUser.getId();
+			SysUser userParams = new SysUser();
+			userParams.setId(userId);
+			SysUser user = sysUserMapper.selectOne(new QueryWrapper<SysUser>(userParams));
+			
+			int len = files.size();
+			try {
+				for (int i = 0; i < len; i++) {
+					MultipartFile file = files.get(i);
+					String fileName = file.getOriginalFilename();
+					int index = fileName.lastIndexOf('.');
+					String suffix = fileName.substring(index);
+					
+					if (!suffix.equalsIgnoreCase(".zip")) {
+						result.fail("只能上传.zip文件");
+					}
+					else if (user.getScore() < 5) {
+						result.fail("积分不足，文件上传失败!");
+					} else {
+						user.setScore(user.getScore() - 5);
+						sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
+						sysFileService.saveFile(fileName, file.getBytes(), currentUser);	
+					}
 				}
-				else if (user.getScore() < 5) {
-					result.fail("积分不足，文件上传失败!");
-				} else {
-					user.setScore(user.getScore() - 5);
-					sysUserMapper.update(user, new UpdateWrapper<SysUser>().eq("id", user.getId()));
-					sysFileService.saveFile(fileName, file.getBytes(), currentUser);	
-				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} else {
+			result.fail("文件上传失败!");
 		}
 		
 		return result;
@@ -327,27 +334,35 @@ public class SysFileController extends BaseController{
 	}
 	
 	@RequestMapping("/download")
-	public Result download(Long id, HttpServletResponse response) {
+	public Result download(Long id, HttpServletRequest request, HttpServletResponse response) {
 		Result result = new Result();
 		
 		try {
-			SysFile file = sysFileService.getFile(id);
-			if (file != null) {
-				response.reset();
-				// 配置文件下载
-                response.setHeader("content-type", "application/octet-stream");
-                response.setContentType("application/octet-stream");
-                // 下载文件能正常显示中文
-                response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(file.getFileName(), "UTF-8"));
-                
-				OutputStream out = response.getOutputStream();
-                out.write(file.getFileContent());
-                out.flush();
-                out.close();
-				
-				result.success("文件下载完成!");
-			}else {
-				result.fail("文件错误!");
+			String token = request.getParameter("token");
+			String rightToken = (String)request.getSession().getAttribute("token");
+			
+			if (rightToken.equals(token)) {
+				SysFile file = sysFileService.getFile(id);
+				if (file != null) {
+					response.reset();
+					// 配置文件下载
+	                response.setHeader("content-type", "application/octet-stream");
+	                response.setContentType("application/octet-stream");
+	                // 下载文件能正常显示中文
+	                response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(file.getFileName(), "UTF-8"));
+	                
+					OutputStream out = response.getOutputStream();
+	                out.write(file.getFileContent());
+	                out.flush();
+	                out.close();
+					
+					result.success("文件下载完成!");
+				} else {
+					result.fail("文件已经被删除!");
+				}
+			}
+			else {
+				result.fail("文件上传失败!");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
